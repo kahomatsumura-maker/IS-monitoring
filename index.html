@@ -7,58 +7,90 @@
 <style>
   :root {
     color-scheme: light;
-    --page: #f9f9f7;
-    --surface: #fcfcfb;
-    --ink: #0b0b0b;
-    --ink-2: #52514e;
-    --muted: #898781;
-    --grid: #e1e0d9;
-    --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10);
-    --good: #006300;
-    /* メンバー色(カテゴリカル slot1-3) */
-    --m1: #2a78d6;  /* 林我玖 */
-    --m2: #008300;  /* 奈良 */
-    --m3: #e87ba4;  /* 松村佳保 */
-    /* フェーズ/Tier 順序ランプ(青・淡→濃) */
-    --p1: #86b6ef; --p2: #6da7ec; --p3: #5598e7; --p4: #3987e5;
-    --p5: #2a78d6; --p6: #256abf; --p7: #184f95; --p8: #0d366b;
-    --dead: #898781;
-    --focus-ring: #eda100;
+    --page: #eef4fd;            /* 淡いブルーの背景 */
+    --surface: #ffffff;
+    --ink: #1e293b;
+    --ink-2: #475569;
+    --muted: #94a3b8;
+    --grid: #e2e8f0;
+    --baseline: #cbd5e1;
+    --border: #dbe4f2;
+    --shadow: 0 1px 3px rgba(37, 99, 235, 0.07);
+    --good: #16a34a;
+    --blue: #2563eb;
+    --amber: #d97706;
+    --pink: #ec4899;
+    --pink-soft: #fdf2f8;       /* 淡いピンク */
+    --pink-line: #f9a8d4;
+    --blue-tint: #eff6ff;
+    --green-tint: #f0fdf4;
+    --slate-tint: #f8fafc;
+    /* メンバー色 */
+    --m1: #2563eb;  /* 林我玖 */
+    --m2: #16a34a;  /* 奈良 */
+    --m3: #ec4899;  /* 松村佳保 */
+    /* フェーズ(青・淡→濃、受注=緑) */
+    --p1: #93c5fd; --p2: #60a5fa; --p3: #3b82f6; --p4: #2563eb;
+    --p5: #1d4ed8; --p6: #1e40af; --p7: #1e3a8a; --p8: #16a34a;
+    --dead: #94a3b8;
+    /* Tier(参考ページに合わせる: T1青 T2緑 T3オレンジ T4グレー) */
+    --t1: #2563eb; --t2: #16a34a; --t3: #d97706; --t4: #64748b; --t0: #cbd5e1;
+    --focus-ring: #ec4899;
+    --mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) {
       color-scheme: dark;
-      --page: #0d0d0d;
-      --surface: #1a1a19;
-      --ink: #ffffff;
-      --ink-2: #c3c2b7;
-      --muted: #898781;
-      --grid: #2c2c2a;
-      --baseline: #383835;
-      --border: rgba(255,255,255,0.10);
-      --good: #0ca30c;
-      --m1: #3987e5; --m2: #008300; --m3: #d55181;
-      --p1: #184f95; --p2: #1c5cab; --p3: #256abf; --p4: #2a78d6;
-      --p5: #3987e5; --p6: #5598e7; --p7: #6da7ec; --p8: #9ec5f4;
-      --focus-ring: #c98500;
+      --page: #0f172a;
+      --surface: #1e293b;
+      --ink: #f1f5f9;
+      --ink-2: #cbd5e1;
+      --muted: #94a3b8;
+      --grid: #334155;
+      --baseline: #475569;
+      --border: rgba(255,255,255,0.12);
+      --shadow: none;
+      --good: #22c55e;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --pink: #ec4899;
+      --pink-soft: rgba(236,72,153,0.12);
+      --pink-line: rgba(236,72,153,0.45);
+      --blue-tint: rgba(59,130,246,0.12);
+      --green-tint: rgba(34,197,94,0.12);
+      --slate-tint: rgba(148,163,184,0.08);
+      --m1: #3b82f6; --m2: #16a34a; --m3: #ec4899;
+      --p1: #1e40af; --p2: #1d4ed8; --p3: #2563eb; --p4: #3b82f6;
+      --p5: #60a5fa; --p6: #93c5fd; --p7: #bfdbfe; --p8: #22c55e;
+      --t1: #3b82f6; --t2: #22c55e; --t3: #f59e0b; --t4: #94a3b8; --t0: #475569;
+      --focus-ring: #f472b6;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --ink: #ffffff;
-    --ink-2: #c3c2b7;
-    --muted: #898781;
-    --grid: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255,255,255,0.10);
-    --good: #0ca30c;
-    --m1: #3987e5; --m2: #008300; --m3: #d55181;
-    --p1: #184f95; --p2: #1c5cab; --p3: #256abf; --p4: #2a78d6;
-    --p5: #3987e5; --p6: #5598e7; --p7: #6da7ec; --p8: #9ec5f4;
-    --focus-ring: #c98500;
+    --page: #0f172a;
+    --surface: #1e293b;
+    --ink: #f1f5f9;
+    --ink-2: #cbd5e1;
+    --muted: #94a3b8;
+    --grid: #334155;
+    --baseline: #475569;
+    --border: rgba(255,255,255,0.12);
+    --shadow: none;
+    --good: #22c55e;
+    --blue: #3b82f6;
+    --amber: #f59e0b;
+    --pink: #ec4899;
+    --pink-soft: rgba(236,72,153,0.12);
+    --pink-line: rgba(236,72,153,0.45);
+    --blue-tint: rgba(59,130,246,0.12);
+    --green-tint: rgba(34,197,94,0.12);
+    --slate-tint: rgba(148,163,184,0.08);
+    --m1: #3b82f6; --m2: #16a34a; --m3: #ec4899;
+    --p1: #1e40af; --p2: #1d4ed8; --p3: #2563eb; --p4: #3b82f6;
+    --p5: #60a5fa; --p6: #93c5fd; --p7: #bfdbfe; --p8: #22c55e;
+    --t1: #3b82f6; --t2: #22c55e; --t3: #f59e0b; --t4: #94a3b8; --t0: #475569;
+    --focus-ring: #f472b6;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -78,26 +110,30 @@
   .btn {
     font: inherit; font-size: 13px; cursor: pointer;
     background: var(--surface); color: var(--ink);
-    border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 10px; padding: 6px 12px;
+    box-shadow: var(--shadow);
   }
-  .btn:hover { border-color: var(--baseline); }
+  .btn:hover { border-color: var(--blue); }
   .btn[disabled] { opacity: .5; cursor: wait; }
   .meta-line { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
 
   /* ---------- 期間フィルタ ---------- */
   .period-bar {
     display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 10px 14px; margin-bottom: 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
   }
   .period-bar .p-title { font-size: 12px; color: var(--ink-2); margin-right: 6px; font-weight: 700; }
   .pchip {
     font: inherit; font-size: 13px; cursor: pointer;
-    background: var(--surface); color: var(--ink);
-    border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 14px;
   }
-  .pchip:hover { border-color: var(--baseline); }
-  .pchip.active { background: var(--ink); color: var(--page); border-color: var(--ink); font-weight: 700; }
+  .pchip:hover { border-color: var(--pink-line); }
+  .pchip.active {
+    background: var(--pink-soft); color: var(--pink);
+    border: 2px solid var(--pink); padding: 2px 13px; font-weight: 700;
+  }
   .custom-range { display: none; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
   .custom-range.show { display: inline-flex; }
   .custom-range input[type=date] {
@@ -106,47 +142,53 @@
   }
   .toolbar { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; padding: 0 4px; }
   .toolbar label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .toolbar input[type=checkbox] { accent-color: var(--pink); }
   .status-banner {
-    border: 1px solid var(--focus-ring); background: var(--surface);
-    border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--ink-2);
+    border: 1px solid var(--pink-line); background: var(--pink-soft);
+    border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--ink-2);
     margin-bottom: 16px;
   }
 
-  /* ---------- KPI row ---------- */
-  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  /* ---------- KPI row(参考ページのTierカード風) ---------- */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
   .kpi {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 12px 16px; cursor: pointer;
+    background: var(--surface); border-radius: 14px;
+    padding: 12px 16px 10px; cursor: pointer; text-align: center;
+    border: 2px solid var(--border); box-shadow: var(--shadow);
   }
-  .kpi:hover { border-color: var(--baseline); }
-  .kpi .k-label { font-size: 12px; color: var(--ink-2); }
-  .kpi .k-value { font-size: 30px; font-weight: 700; line-height: 1.2; }
-  .kpi .k-sub { font-size: 12px; color: var(--muted); }
+  .kpi[data-accent] { border-color: var(--accent); }
+  .kpi:hover { filter: brightness(0.985); }
+  .kpi .k-label { font-size: 11px; font-weight: 700; color: var(--accent, var(--ink-2)); letter-spacing: .04em; }
+  .kpi .k-value { font-size: 32px; font-weight: 700; line-height: 1.25; font-family: var(--mono); }
+  .kpi .k-sub { font-size: 11px; color: var(--muted); }
 
   /* ---------- section ---------- */
   section { margin-bottom: 28px; }
-  section > h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
+  section > h2 {
+    font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--ink);
+    border-left: 4px solid var(--pink); padding-left: 9px; border-radius: 2px;
+  }
   section > h2 .h-note { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 8px; }
 
   /* ---------- member cards ---------- */
   .members { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
   .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px 20px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; box-shadow: var(--shadow); border-top: 3px solid var(--mc, var(--border));
   }
   .card .c-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
   .c-name { font-size: 17px; font-weight: 700; white-space: nowrap; }
   .role-badge {
-    font-size: 11px; color: var(--ink-2); border: 1px solid var(--border);
-    border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+    font-size: 11px; font-weight: 700; color: var(--mc, var(--ink-2));
+    border: 1px solid currentColor; border-radius: 999px; padding: 1px 9px; white-space: nowrap;
   }
   .focus-note { margin-left: auto; font-size: 11px; color: var(--ink-2); text-align: right; }
 
   .c-hero { display: flex; align-items: center; gap: 16px; margin: 10px 0 4px; flex-wrap: wrap; }
   .hero-main { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
   .hero-main:hover .t-num { text-decoration: underline; }
-  .t-num { font-size: 40px; font-weight: 700; line-height: 1.1; }
+  .t-num { font-size: 40px; font-weight: 700; line-height: 1.1; font-family: var(--mono); }
   .t-label { font-size: 12px; color: var(--ink-2); }
   .hero-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
   .stat-pill {
@@ -154,14 +196,14 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px;
     display: inline-flex; align-items: center; gap: 6px;
   }
-  .stat-pill b { color: var(--ink); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .stat-pill b { color: var(--ink); font-size: 14px; font-family: var(--mono); }
   .stat-pill:hover { border-color: var(--baseline); }
   .stat-pill .sdot { width: 8px; height: 8px; border-radius: 2px; }
 
   .meter-block { margin: 8px 0 14px; }
   .meter-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); margin-bottom: 3px; }
-  .meter-label b { color: var(--ink); font-size: 13px; }
-  .meter { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+  .meter-label b { color: var(--ink); font-size: 13px; font-family: var(--mono); }
+  .meter { height: 8px; background: var(--pink-soft); border: 1px solid var(--pink-soft); border-radius: 4px; overflow: hidden; }
   .meter > i { display: block; height: 100%; border-radius: 4px; }
 
   .pg-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
@@ -169,45 +211,52 @@
   .pgroup { display: grid; gap: 4px; flex: 7; grid-template-columns: repeat(7, 1fr); }
   .pgroup.done { flex: 2; grid-template-columns: repeat(2, 1fr); min-width: 108px; }
   .ph {
-    border: 1px solid var(--border); border-radius: 8px; padding: 7px 2px 6px;
+    border: 1px solid var(--border); border-radius: 10px; padding: 7px 2px 6px;
     text-align: center; cursor: pointer; position: relative; background: var(--surface);
   }
-  .ph:hover { border-color: var(--baseline); }
+  .ph:hover { border-color: var(--baseline); background: var(--slate-tint); }
   .ph .bar { height: 4px; border-radius: 2px; margin: 0 5px 5px; }
   .ph .p-label { font-size: 10px; color: var(--muted); }
-  .ph .p-count { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
-  .ph .p-pct { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 14px; }
+  .ph .p-count { font-size: 19px; font-weight: 700; font-family: var(--mono); line-height: 1.25; }
+  .ph .p-pct { font-size: 10px; color: var(--muted); font-family: var(--mono); min-height: 14px; }
   .ph.is-zero .p-count { color: var(--muted); font-weight: 400; }
-  .ph.is-focus { border: 2px solid var(--focus-ring); }
-  .ph .star { position: absolute; top: -9px; right: -4px; font-size: 11px; }
+  .ph.is-focus { border: 2px solid var(--focus-ring); background: var(--pink-soft); }
+  .ph .star { position: absolute; top: -10px; right: -5px; font-size: 12px; }
   .lead-line { margin-top: 10px; font-size: 12px; color: var(--ink-2); }
-  .lead-line b { color: var(--ink); }
+  .lead-line b { color: var(--ink); font-family: var(--mono); }
   .badge { display: inline-block; font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; margin-right: 4px; color: var(--ink-2); white-space: nowrap; }
   .badge.new { border-color: var(--good); color: var(--good); }
 
   /* ---------- tables ---------- */
-  .tbl-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+  .tbl-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow-x: auto; box-shadow: var(--shadow); }
   table { border-collapse: collapse; width: 100%; font-size: 13px; }
   th, td { padding: 8px 12px; text-align: left; white-space: nowrap; }
-  thead th { color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--grid); }
+  thead th { color: var(--muted); font-weight: 700; font-size: 12px; border-bottom: 1px solid var(--grid); }
   tbody tr { border-bottom: 1px solid var(--grid); }
   tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--slate-tint); }
   tbody tr.rowlink { cursor: pointer; }
-  tbody tr.rowlink:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr.rowlink:hover { background: var(--blue-tint); }
+  td.num, th.num { text-align: right; }
+  td.num { font-family: var(--mono); }
   td.cellink { cursor: pointer; }
-  td.cellink:hover { text-decoration: underline; }
+  td.cellink:hover { text-decoration: underline; color: var(--blue); }
   td.dim { color: var(--muted); }
+  /* 主担当テーブルの列グループ色(参考ページの列色分け風) */
+  th.g-live { color: var(--blue); } td.g-live { background: var(--blue-tint); color: var(--blue); }
+  th.g-won  { color: var(--good); } td.g-won  { background: var(--green-tint); color: var(--good); }
+  th.g-dead { color: var(--muted); } td.g-dead { background: var(--slate-tint); color: var(--ink-2); }
+  td.g-live.dim, td.g-won.dim, td.g-dead.dim { color: var(--muted); }
 
   /* ---------- weekly chart ---------- */
-  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px 10px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px 10px; box-shadow: var(--shadow); }
   .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-bottom: 12px; flex-wrap: wrap; }
   .legend span { display: inline-flex; align-items: center; gap: 5px; }
   .wchart { display: flex; align-items: flex-end; gap: 14px; height: 140px; border-bottom: 1px solid var(--baseline); padding: 0 6px; }
   .wgroup { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; height: 100%; }
   .wbar { width: 16px; max-width: 22%; border-radius: 4px 4px 0 0; min-height: 0; position: relative; }
   .wbar:hover { outline: 2px solid var(--surface); filter: brightness(1.12); }
-  .wbar .v { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .wbar .v { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ink-2); font-family: var(--mono); }
   .wlabels { display: flex; gap: 14px; padding: 4px 6px 0; }
   .wlabels div { flex: 1; text-align: center; font-size: 11px; color: var(--muted); }
 
@@ -215,32 +264,32 @@
   .stack-block { margin-bottom: 16px; }
   .stack-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; font-size: 13px; }
   .stack-head .s-name { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-  .stack-head .s-total { color: var(--muted); font-size: 12px; }
-  .stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; background: var(--grid); }
+  .stack-head .s-total { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+  .stack { display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: var(--grid); }
   .seg { min-width: 0; cursor: pointer; }
   .seg + .seg { border-left: 2px solid var(--surface); }
   .seg:hover { filter: brightness(1.12); }
   .stack-breakdown { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 5px; font-size: 12px; color: var(--ink-2); }
   .stack-breakdown span { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
   .stack-breakdown span:hover { text-decoration: underline; }
-  .stack-breakdown b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .stack-breakdown b { color: var(--ink); font-family: var(--mono); }
 
   /* ---------- modal ---------- */
   .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none;
+    position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: none;
     align-items: flex-start; justify-content: center; padding: 5vh 16px; z-index: 50;
   }
   .overlay.open { display: flex; }
   .modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
     width: min(1120px, 100%); max-height: 88vh; display: flex; flex-direction: column;
   }
   .modal-hd { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--grid); }
   .modal-hd h3 { font-size: 15px; }
-  .modal-hd .count { color: var(--muted); font-size: 13px; }
+  .modal-hd .count { color: var(--muted); font-size: 13px; font-family: var(--mono); }
   .modal-hd .x { margin-left: auto; }
   .modal-body { overflow: auto; padding: 0 6px 6px; }
-  .modal-body a { color: var(--m1); text-decoration: none; }
+  .modal-body a { color: var(--blue); text-decoration: none; }
   .modal-body a:hover { text-decoration: underline; }
   .sf-hint { padding: 10px 18px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--grid); }
 
@@ -252,9 +301,9 @@
     width: 100%; font: inherit; font-size: 13px; color: var(--ink);
     background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
   }
-  .form-row textarea { min-height: 140px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .form-row textarea { min-height: 140px; font-family: var(--mono); font-size: 12px; }
   .form-actions { display: flex; gap: 8px; padding: 0 18px 18px; }
-  .btn.primary { background: var(--m1); color: #fff; border-color: transparent; }
+  .btn.primary { background: var(--blue); color: #fff; border-color: transparent; }
   .hint { font-size: 12px; color: var(--muted); }
   @media (max-width: 760px) {
     .pgroup { grid-template-columns: repeat(4, 1fr); }
@@ -266,7 +315,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>ISモニタリング</h1>
+    <h1>📊 ISモニタリング</h1>
     <span class="week-label" id="weekLabel"></span>
     <div class="hd-right">
       <button class="btn" id="btnReload">↻ 最新データに更新</button>
@@ -293,12 +342,12 @@
   <div class="kpi-row" id="kpiRow"></div>
 
   <section>
-    <h2>メンバー別サマリー<span class="h-note" id="memberNote">数字をクリックすると案件一覧が開きます</span></h2>
+    <h2>🧑‍💻 メンバー別サマリー<span class="h-note" id="memberNote">数字をクリックすると案件一覧が開きます</span></h2>
     <div class="members" id="memberCards"></div>
   </section>
 
   <section>
-    <h2>週次推移(新規アポ数)<span class="h-note">初回アポイント日ベース</span></h2>
+    <h2>📈 週次推移(新規アポ数)<span class="h-note">初回アポイント日ベース</span></h2>
     <div class="chart-card">
       <div class="legend" id="wLegend"></div>
       <div class="wchart" id="wChart"></div>
@@ -307,17 +356,17 @@
   </section>
 
   <section>
-    <h2>Tier別 獲得比率<span class="h-note">期間内に獲得したアポのTier内訳(Tierはall_leadタブの備考列から自動判定)</span></h2>
+    <h2>🏆 Tier別 獲得比率<span class="h-note">期間内に獲得したアポのTier内訳(Tierはall_leadタブの備考列から自動判定)</span></h2>
     <div class="chart-card" id="tierCard"></div>
   </section>
 
   <section>
-    <h2>主担当別 案件数<span class="h-note">セルをクリックすると該当案件が開きます</span></h2>
+    <h2>👥 主担当別 案件数<span class="h-note">セルをクリックすると該当案件が開きます</span></h2>
     <div class="tbl-card"><table id="ownerTable"></table></div>
   </section>
 
   <section>
-    <h2>週次スナップショット(フェーズ分布の推移)<span class="h-note">全期間ベース・ページを開くたびに当週分を自動保存(このブラウザ内)</span></h2>
+    <h2>📸 週次スナップショット(フェーズ分布の推移)<span class="h-note">全期間ベース・ページを開くたびに当週分を自動保存(このブラウザ内)</span></h2>
     <div class="tbl-card"><table id="snapTable"></table></div>
   </section>
 </div>
@@ -407,7 +456,7 @@ const PHASE_FULL = {
 };
 const PHASE_CVAR = { P1:"--p1",P2:"--p2",P3:"--p3",P4:"--p4",P5:"--p5",P6:"--p6",P7:"--p7",P8:"--p8",DEAD:"--dead" };
 const TIER_ORDER = ["Tier1","Tier2","Tier3","Tier4","Tier5","Tier6","Tier7","Tier8","Tier9","Tier未設定"];
-const TIER_CVAR = { Tier1:"--p7", Tier2:"--p5", Tier3:"--p3", Tier4:"--p1", "Tier未設定":"--dead" };
+const TIER_CVAR = { Tier1:"--t1", Tier2:"--t2", Tier3:"--t3", Tier4:"--t4", "Tier未設定":"--t0" };
 const DEFAULT_TARGET = 10;
 
 const LS = {
@@ -695,7 +744,7 @@ let SUM_ALL = {};    // 全期間の集計(月次目標・スナップショッ�
 let dataState = { source: "", fetchedAt: null, error: "" };
 
 function memberColor(m) { return `var(${m.cvar})`; }
-function tierColor(t) { return `var(${TIER_CVAR[t] || "--p2"})`; }
+function tierColor(t) { return `var(${TIER_CVAR[t] || "--t4"})`; }
 
 function renderHeader() {
   const sun = addDays(thisMonday, 6);
@@ -752,15 +801,15 @@ function renderKpis() {
   const active = all.filter((d) => LIVE_PHASES.includes(d.phase));
   const monthAll = DEALS_ALL.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth);
   const kpis = [
-    { label: `獲得アポ(${periodLabel()}・3名計)`, value: all.length, sub: "クリックで一覧", filter: {} },
+    { label: `獲得アポ(${periodLabel()}・3名計)`, value: all.length, sub: "クリックで一覧", filter: {}, accent: "var(--blue)" },
     { label: "今月の新規アポ(3名計)", value: monthAll.length,
-      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, all: true, filter: { month: thisMonth } },
-    { label: "進行中(P1〜P7)", value: active.length, sub: "期間内・受注/Dead除く", filter: { active: true } },
-    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "期間内", filter: { phase: "P8" } },
-    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "期間内", filter: { phase: "DEAD" } },
+      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, all: true, filter: { month: thisMonth }, accent: "var(--pink)" },
+    { label: "進行中(P1〜P7)", value: active.length, sub: "期間内・受注/Dead除く", filter: { active: true }, accent: "var(--amber)" },
+    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "期間内", filter: { phase: "P8" }, accent: "var(--good)" },
+    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "期間内", filter: { phase: "DEAD" }, accent: "var(--muted)" },
   ];
   $("kpiRow").innerHTML = kpis.map((k, i) => `
-    <div class="kpi" data-kpi="${i}">
+    <div class="kpi" data-kpi="${i}" data-accent style="--accent:${k.accent}">
       <div class="k-label">${esc(k.label)}</div>
       <div class="k-value">${k.value}</div>
       <div class="k-sub">${esc(k.sub)}</div>
@@ -810,7 +859,7 @@ function renderMembers() {
       </div>`;
     };
     return `
-    <div class="card" data-m="${esc(m.key)}">
+    <div class="card" data-m="${esc(m.key)}" style="--mc:${memberColor(m)}">
       <div class="c-head">
         <span class="dot" style="background:${memberColor(m)}"></span>
         <span class="c-name">${esc(m.key)}</span>
@@ -945,17 +994,18 @@ function renderOwners() {
     o.phases[d.phase]++;
   }
   const owners = [...map.entries()].sort((a, b) => b[1].total - a[1].total);
+  const gcls = (p) => p === "P8" ? "g-won" : p === "DEAD" ? "g-dead" : "g-live";
   $("ownerTable").innerHTML = `
     <thead><tr><th>主担当者</th><th class="num">案件数</th>
-      ${PHASES.map((p) => `<th class="num" title="${esc(PHASE_FULL[p])}">${PHASE_LABEL[p] === "受注" ? "P8(受注)" : PHASE_LABEL[p]}</th>`).join("")}
+      ${PHASES.map((p) => `<th class="num ${gcls(p)}" title="${esc(PHASE_FULL[p])}">${PHASE_LABEL[p] === "受注" ? "P8(受注)" : PHASE_LABEL[p]}</th>`).join("")}
     </tr></thead>
     <tbody>${owners.map(([name, o]) => `
       <tr>
         <td class="cellink" data-owner="${esc(name)}">${esc(name)}</td>
         <td class="num cellink" data-owner="${esc(name)}"><b>${o.total}</b></td>
         ${PHASES.map((p) => o.phases[p]
-          ? `<td class="num cellink" data-owner="${esc(name)}" data-ph="${p}">${o.phases[p]}</td>`
-          : `<td class="num dim">0</td>`).join("")}
+          ? `<td class="num cellink ${gcls(p)}" data-owner="${esc(name)}" data-ph="${p}">${o.phases[p]}</td>`
+          : `<td class="num dim ${gcls(p)}">0</td>`).join("")}
       </tr>`).join("") || `<tr><td colspan="11" style="color:var(--muted)">案件がありません</td></tr>`}
     </tbody>`;
   $("ownerTable").querySelectorAll("td.cellink").forEach((td) => {
