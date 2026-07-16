@@ -20,7 +20,7 @@
     --m1: #2a78d6;  /* 林我玖 */
     --m2: #008300;  /* 奈良 */
     --m3: #e87ba4;  /* 松村佳保 */
-    /* フェーズ順序ランプ(青・淡→濃) P1..P8 */
+    /* フェーズ/Tier 順序ランプ(青・淡→濃) */
     --p1: #86b6ef; --p2: #6da7ec; --p3: #5598e7; --p4: #3987e5;
     --p5: #2a78d6; --p6: #256abf; --p7: #184f95; --p8: #0d366b;
     --dead: #898781;
@@ -68,7 +68,7 @@
     font-size: 14px;
     line-height: 1.55;
   }
-  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px 20px 60px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 20px 60px; }
 
   /* ---------- header ---------- */
   header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px; margin-bottom: 6px; }
@@ -82,8 +82,29 @@
   }
   .btn:hover { border-color: var(--baseline); }
   .btn[disabled] { opacity: .5; cursor: wait; }
-  .meta-line { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
-  .toolbar { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; }
+  .meta-line { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+
+  /* ---------- 期間フィルタ ---------- */
+  .period-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 8px;
+  }
+  .period-bar .p-title { font-size: 12px; color: var(--ink-2); margin-right: 6px; font-weight: 700; }
+  .pchip {
+    font: inherit; font-size: 13px; cursor: pointer;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px;
+  }
+  .pchip:hover { border-color: var(--baseline); }
+  .pchip.active { background: var(--ink); color: var(--page); border-color: var(--ink); font-weight: 700; }
+  .custom-range { display: none; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+  .custom-range.show { display: inline-flex; }
+  .custom-range input[type=date] {
+    font: inherit; font-size: 12px; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px;
+  }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; padding: 0 4px; }
   .toolbar label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
   .status-banner {
     border: 1px solid var(--focus-ring); background: var(--surface);
@@ -103,52 +124,63 @@
   .kpi .k-sub { font-size: 12px; color: var(--muted); }
 
   /* ---------- section ---------- */
-  section { margin-bottom: 26px; }
+  section { margin-bottom: 28px; }
   section > h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--ink); }
   section > h2 .h-note { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 8px; }
 
   /* ---------- member cards ---------- */
-  .members { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+  .members { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 16px 18px;
+    padding: 18px 20px;
   }
-  .card .c-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .card .c-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-  .c-name { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .c-name { font-size: 17px; font-weight: 700; white-space: nowrap; }
   .role-badge {
     font-size: 11px; color: var(--ink-2); border: 1px solid var(--border);
     border-radius: 999px; padding: 1px 8px; white-space: nowrap;
   }
   .focus-note { margin-left: auto; font-size: 11px; color: var(--ink-2); text-align: right; }
-  .c-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; cursor: pointer; }
-  .c-total:hover .t-num { text-decoration: underline; }
-  .t-num { font-size: 34px; font-weight: 700; }
-  .t-label { font-size: 12px; color: var(--ink-2); }
-  .c-subline { font-size: 12px; color: var(--ink-2); margin-bottom: 10px; }
-  .c-subline b { color: var(--ink); }
 
-  /* 月次目標メーター */
-  .meter-block { margin-bottom: 12px; }
+  .c-hero { display: flex; align-items: center; gap: 16px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .hero-main { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
+  .hero-main:hover .t-num { text-decoration: underline; }
+  .t-num { font-size: 40px; font-weight: 700; line-height: 1.1; }
+  .t-label { font-size: 12px; color: var(--ink-2); }
+  .hero-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .stat-pill {
+    font: inherit; font-size: 12px; cursor: pointer; color: var(--ink-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .stat-pill b { color: var(--ink); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .stat-pill:hover { border-color: var(--baseline); }
+  .stat-pill .sdot { width: 8px; height: 8px; border-radius: 2px; }
+
+  .meter-block { margin: 8px 0 14px; }
   .meter-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); margin-bottom: 3px; }
-  .meter-label b { color: var(--ink); }
+  .meter-label b { color: var(--ink); font-size: 13px; }
   .meter { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
   .meter > i { display: block; height: 100%; border-radius: 4px; }
 
-  /* フェーズ分布 */
-  .phase-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+  .pg-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .phase-flex { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .pgroup { display: grid; gap: 4px; flex: 7; grid-template-columns: repeat(7, 1fr); }
+  .pgroup.done { flex: 2; grid-template-columns: repeat(2, 1fr); min-width: 108px; }
   .ph {
-    border: 1px solid var(--border); border-radius: 8px; padding: 6px 2px 5px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 2px 6px;
     text-align: center; cursor: pointer; position: relative; background: var(--surface);
   }
   .ph:hover { border-color: var(--baseline); }
-  .ph .bar { height: 4px; border-radius: 2px; margin: 0 4px 4px; }
+  .ph .bar { height: 4px; border-radius: 2px; margin: 0 5px 5px; }
   .ph .p-label { font-size: 10px; color: var(--muted); }
-  .ph .p-count { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ph .p-count { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
+  .ph .p-pct { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 14px; }
   .ph.is-zero .p-count { color: var(--muted); font-weight: 400; }
   .ph.is-focus { border: 2px solid var(--focus-ring); }
   .ph .star { position: absolute; top: -9px; right: -4px; font-size: 11px; }
-  .lead-line { margin-top: 9px; font-size: 12px; color: var(--ink-2); }
+  .lead-line { margin-top: 10px; font-size: 12px; color: var(--ink-2); }
   .lead-line b { color: var(--ink); }
   .badge { display: inline-block; font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; margin-right: 4px; color: var(--ink-2); white-space: nowrap; }
   .badge.new { border-color: var(--good); color: var(--good); }
@@ -163,30 +195,35 @@
   tbody tr.rowlink { cursor: pointer; }
   tbody tr.rowlink:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.cellink { cursor: pointer; }
+  td.cellink:hover { text-decoration: underline; }
+  td.dim { color: var(--muted); }
 
   /* ---------- weekly chart ---------- */
   .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px 10px; }
-  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-bottom: 12px; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-bottom: 12px; flex-wrap: wrap; }
   .legend span { display: inline-flex; align-items: center; gap: 5px; }
-  .wchart { display: flex; align-items: flex-end; gap: 18px; height: 140px; border-bottom: 1px solid var(--baseline); padding: 0 6px; }
+  .wchart { display: flex; align-items: flex-end; gap: 14px; height: 140px; border-bottom: 1px solid var(--baseline); padding: 0 6px; }
   .wgroup { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; height: 100%; }
   .wbar { width: 16px; max-width: 22%; border-radius: 4px 4px 0 0; min-height: 0; position: relative; }
   .wbar:hover { outline: 2px solid var(--surface); filter: brightness(1.12); }
   .wbar .v { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-  .wlabels { display: flex; gap: 18px; padding: 4px 6px 0; }
+  .wlabels { display: flex; gap: 14px; padding: 4px 6px 0; }
   .wlabels div { flex: 1; text-align: center; font-size: 11px; color: var(--muted); }
 
-  /* Tier */
-  .tier-groups { display: grid; gap: 10px; }
-  .tier-row { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
-  .tier-name { font-weight: 700; min-width: 110px; }
-  .tier-name small { display:block; font-weight: 400; color: var(--muted); font-size: 11px; }
-  .comp-chip {
-    font-size: 12px; border: 1px solid var(--border); border-radius: 999px;
-    padding: 3px 12px; cursor: pointer; background: var(--surface); color: var(--ink); font-family: inherit;
-  }
-  .comp-chip:hover { border-color: var(--baseline); }
-  .comp-chip b { font-variant-numeric: tabular-nums; }
+  /* ---------- Tier獲得比率 ---------- */
+  .stack-block { margin-bottom: 16px; }
+  .stack-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; font-size: 13px; }
+  .stack-head .s-name { font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .stack-head .s-total { color: var(--muted); font-size: 12px; }
+  .stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; background: var(--grid); }
+  .seg { min-width: 0; cursor: pointer; }
+  .seg + .seg { border-left: 2px solid var(--surface); }
+  .seg:hover { filter: brightness(1.12); }
+  .stack-breakdown { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 5px; font-size: 12px; color: var(--ink-2); }
+  .stack-breakdown span { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .stack-breakdown span:hover { text-decoration: underline; }
+  .stack-breakdown b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
   /* ---------- modal ---------- */
   .overlay {
@@ -219,7 +256,11 @@
   .form-actions { display: flex; gap: 8px; padding: 0 18px 18px; }
   .btn.primary { background: var(--m1); color: #fff; border-color: transparent; }
   .hint { font-size: 12px; color: var(--muted); }
-  @media (max-width: 720px) { .phase-grid { grid-template-columns: repeat(5, 1fr); } }
+  @media (max-width: 760px) {
+    .pgroup { grid-template-columns: repeat(4, 1fr); }
+    .pgroup.done { grid-template-columns: repeat(2, 1fr); }
+    .hero-stats { margin-left: 0; }
+  }
 </style>
 </head>
 <body>
@@ -235,6 +276,14 @@
     </div>
   </header>
   <div class="meta-line" id="metaLine"></div>
+
+  <div class="period-bar" id="periodBar">
+    <span class="p-title">期間</span>
+    <!-- チップはJSで生成 -->
+    <span class="custom-range" id="customRange">
+      <input type="date" id="inFrom"> 〜 <input type="date" id="inTo">
+    </span>
+  </div>
   <div class="toolbar">
     <label><input type="checkbox" id="chkKeizoku"> 継続・再計上案件も含める</label>
     <a id="sheetLink" href="#" target="_blank" rel="noopener" style="color:var(--muted)">元スプレッドシートを開く ↗</a>
@@ -244,12 +293,12 @@
   <div class="kpi-row" id="kpiRow"></div>
 
   <section>
-    <h2>メンバー別サマリー<span class="h-note">数字をクリックすると案件一覧が開きます</span></h2>
+    <h2>メンバー別サマリー<span class="h-note" id="memberNote">数字をクリックすると案件一覧が開きます</span></h2>
     <div class="members" id="memberCards"></div>
   </section>
 
   <section>
-    <h2>週次推移(新規アポ数)<span class="h-note">初回アポイント日ベース・直近8週</span></h2>
+    <h2>週次推移(新規アポ数)<span class="h-note">初回アポイント日ベース</span></h2>
     <div class="chart-card">
       <div class="legend" id="wLegend"></div>
       <div class="wchart" id="wChart"></div>
@@ -258,18 +307,18 @@
   </section>
 
   <section>
-    <h2>週次スナップショット(フェーズ分布の推移)<span class="h-note">ページを開くたびに当週分を自動保存(このブラウザ内)</span></h2>
-    <div class="tbl-card"><table id="snapTable"></table></div>
+    <h2>Tier別 獲得比率<span class="h-note">期間内に獲得したアポのTier内訳(Tierはall_leadタブの備考列から自動判定)</span></h2>
+    <div class="chart-card" id="tierCard"></div>
   </section>
 
   <section>
-    <h2>主担当別 案件数</h2>
+    <h2>主担当別 案件数<span class="h-note">セルをクリックすると該当案件が開きます</span></h2>
     <div class="tbl-card"><table id="ownerTable"></table></div>
   </section>
 
   <section>
-    <h2>Tier別 企業<span class="h-note">all_leadタブの備考列から自動判定(「tier」タブを作れば上書きも可)</span></h2>
-    <div class="tier-groups" id="tierGroups"></div>
+    <h2>週次スナップショット(フェーズ分布の推移)<span class="h-note">全期間ベース・ページを開くたびに当週分を自動保存(このブラウザ内)</span></h2>
+    <div class="tbl-card"><table id="snapTable"></table></div>
   </section>
 </div>
 
@@ -348,7 +397,8 @@ const MEMBERS = [
   { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, focusNote: "" },
 ];
 const PHASES = ["P1","P2","P3","P4","P5","P6","P7","P8","DEAD"];
-const PHASE_LABEL = { P1:"P1", P2:"P2", P3:"P3", P4:"P4", P5:"P5", P6:"P6", P7:"P7", P8:"P8", DEAD:"Dead" };
+const LIVE_PHASES = ["P1","P2","P3","P4","P5","P6","P7"];
+const PHASE_LABEL = { P1:"P1", P2:"P2", P3:"P3", P4:"P4", P5:"P5", P6:"P6", P7:"P7", P8:"受注", DEAD:"Dead" };
 const PHASE_FULL = {
   P1:"01-Identifying an Opportunity", P2:"02-Determining Problem,Impact,Ideal",
   P3:"03-Validating Benefits & Value", P4:"04-Confirming Value With Power",
@@ -356,6 +406,8 @@ const PHASE_FULL = {
   DEAD:"DEAD(失注)",
 };
 const PHASE_CVAR = { P1:"--p1",P2:"--p2",P3:"--p3",P4:"--p4",P5:"--p5",P6:"--p6",P7:"--p7",P8:"--p8",DEAD:"--dead" };
+const TIER_ORDER = ["Tier1","Tier2","Tier3","Tier4","Tier5","Tier6","Tier7","Tier8","Tier9","Tier未設定"];
+const TIER_CVAR = { Tier1:"--p7", Tier2:"--p5", Tier3:"--p3", Tier4:"--p1", "Tier未設定":"--dead" };
 const DEFAULT_TARGET = 10;
 
 const LS = {
@@ -393,6 +445,7 @@ function mondayOf(d) {
   t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
   return t;
 }
+const addDays = (d, n) => { const t = new Date(d); t.setDate(t.getDate() + n); return t; };
 const fmtMD = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
 const fmtYMD = (d) => `${d.getFullYear()}/${fmtMD(d)}`;
 const monthKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -485,12 +538,63 @@ function objectsFromDelimited(text) {
 
 /* ================= 設定・状態 ================= */
 function loadSettings() {
-  try { return { sfBase: "", targets: {}, includeKeizoku: false, ...JSON.parse(localStorage.getItem(LS.settings) || "{}") }; }
-  catch { return { sfBase: "", targets: {}, includeKeizoku: false }; }
+  try { return { sfBase: "", targets: {}, includeKeizoku: false, period: "all", periodFrom: "", periodTo: "", ...JSON.parse(localStorage.getItem(LS.settings) || "{}") }; }
+  catch { return { sfBase: "", targets: {}, includeKeizoku: false, period: "all", periodFrom: "", periodTo: "" }; }
 }
 let settings = loadSettings();
 const saveSettings = () => localStorage.setItem(LS.settings, JSON.stringify(settings));
 const targetOf = (m) => Number(settings.targets[m.key]) > 0 ? Number(settings.targets[m.key]) : DEFAULT_TARGET;
+
+/* ================= 期間フィルタ ================= */
+const today = new Date();
+const thisWeek = isoWeek(today);
+const thisMonday = mondayOf(today);
+const thisMonth = monthKey(today);
+
+const PERIODS = [
+  { key: "all",       label: "全期間" },
+  { key: "thisWeek",  label: "今週" },
+  { key: "thisMonth", label: "今月" },
+  { key: "lastMonth", label: "先月" },
+  { key: "last4w",    label: "直近4週" },
+  { key: "last12w",   label: "直近12週" },
+  { key: "thisYear",  label: "今年" },
+  { key: "custom",    label: "カスタム" },
+];
+function periodRange() {
+  const p = settings.period || "all";
+  const y = today.getFullYear(), m = today.getMonth();
+  switch (p) {
+    case "thisWeek":  return { from: thisMonday, to: addDays(thisMonday, 6) };
+    case "thisMonth": return { from: new Date(y, m, 1), to: new Date(y, m + 1, 0) };
+    case "lastMonth": return { from: new Date(y, m - 1, 1), to: new Date(y, m, 0) };
+    case "last4w":    return { from: addDays(thisMonday, -21), to: addDays(thisMonday, 6) };
+    case "last12w":   return { from: addDays(thisMonday, -77), to: addDays(thisMonday, 6) };
+    case "thisYear":  return { from: new Date(y, 0, 1), to: new Date(y, 11, 31) };
+    case "custom": {
+      const from = settings.periodFrom ? parseDateStr(settings.periodFrom.replace(/-/g, "/")) : null;
+      const to = settings.periodTo ? parseDateStr(settings.periodTo.replace(/-/g, "/")) : null;
+      return { from, to };
+    }
+    default: return { from: null, to: null };
+  }
+}
+function periodLabel() {
+  const p = PERIODS.find((x) => x.key === (settings.period || "all")) || PERIODS[0];
+  if (p.key === "custom") {
+    const { from, to } = periodRange();
+    return `${from ? fmtYMD(from) : "…"} 〜 ${to ? fmtYMD(to) : "…"}`;
+  }
+  return p.label;
+}
+function inPeriod(d) {
+  const { from, to } = periodRange();
+  if (!from && !to) return true;          // 全期間はアポ日なしも含む
+  if (!d.apoDate) return false;
+  if (from && d.apoDate < from) return false;
+  if (to && d.apoDate > addDays(to, 0)) return false;
+  return true;
+}
 
 /* ================= 案件の正規化 ================= */
 function buildDeals(rows, tierMap) {
@@ -541,11 +645,11 @@ function buildTierMap(rows) {
   const map = {};
   for (const r of rows || []) {
     const keys = Object.keys(r);
-    const accKey = keys.find((k) => /取引先|会社|企業/.test(k)) || keys[0];
-    const tierKey = keys.find((k) => /tier|ティア/i.test(k)) || keys[1];
-    if (!accKey || !tierKey) continue;
+    const accKey = keys.find((k) => /取引先|会社|企業/.test(k));
+    const tierKey = keys.find((k) => /tier|ティア/i.test(k));
+    if (!accKey || !tierKey || accKey === tierKey) continue; // tier列が本当にある場合だけ使う
     const acc = norm(r[accKey]); const t = String(r[tierKey] ?? "").trim();
-    if (acc && t) map[acc] = t;
+    if (acc && t && t.length <= 20) map[acc] = t;
   }
   return map;
 }
@@ -565,11 +669,6 @@ function buildTierMapFromLead(rows) {
 }
 
 /* ================= 集計 ================= */
-const today = new Date();
-const thisWeek = isoWeek(today);
-const thisMonday = mondayOf(today);
-const thisMonth = monthKey(today);
-
 function summarize(deals) {
   const byMember = {};
   for (const m of MEMBERS) {
@@ -578,6 +677,7 @@ function summarize(deals) {
     byMember[m.key] = {
       member: m, list, phases,
       total: list.length,
+      live: list.filter((d) => LIVE_PHASES.includes(d.phase)),
       month: list.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth),
       week: list.filter((d) => d.apoDate && isoWeek(d.apoDate).key === thisWeek.key),
       newLead: list.filter((d) => d.isNewLead),
@@ -588,14 +688,17 @@ function summarize(deals) {
 }
 
 /* ================= 描画 ================= */
-let DEALS = [];
-let SUM = {};
+let DEALS_ALL = [];  // 継続除外のみ適用(期間フィルタ前)
+let DEALS = [];      // 期間フィルタ適用後
+let SUM = {};        // 期間内の集計
+let SUM_ALL = {};    // 全期間の集計(月次目標・スナップショット用)
 let dataState = { source: "", fetchedAt: null, error: "" };
 
 function memberColor(m) { return `var(${m.cvar})`; }
+function tierColor(t) { return `var(${TIER_CVAR[t] || "--p2"})`; }
 
 function renderHeader() {
-  const sun = new Date(thisMonday); sun.setDate(sun.getDate() + 6);
+  const sun = addDays(thisMonday, 6);
   $("weekLabel").textContent = `今週: ${thisWeek.key}(${fmtMD(thisMonday)}〜${fmtMD(sun)})`;
   $("sheetLink").href = SHEET_URL;
   const srcLabel = {
@@ -605,7 +708,7 @@ function renderHeader() {
     sample: "サンプルデータ(data/deals.js)",
   }[dataState.source] || "";
   $("metaLine").textContent =
-    `データ: ${srcLabel}${dataState.fetchedAt ? ` / 取得 ${dataState.fetchedAt}` : ""} / 対象案件 ${DEALS.length}件(初回アポイント取得者: ${MEMBERS.map((m) => m.key).join("・")}${settings.includeKeizoku ? "" : " / 継続・再計上案件を除く"})`;
+    `データ: ${srcLabel}${dataState.fetchedAt ? ` / 取得 ${dataState.fetchedAt}` : ""} / 表示中 ${DEALS.length}件(期間: ${periodLabel()}${settings.includeKeizoku ? "" : " / 継続・再計上案件を除く"})`;
   const banner = $("statusBanner");
   if (dataState.error) {
     banner.hidden = false;
@@ -620,17 +723,41 @@ function renderHeader() {
   $("chkKeizoku").checked = !!settings.includeKeizoku;
 }
 
+function renderPeriodBar() {
+  const bar = $("periodBar");
+  bar.querySelectorAll(".pchip").forEach((el) => el.remove());
+  const custom = $("customRange");
+  const frag = document.createDocumentFragment();
+  for (const p of PERIODS) {
+    const b = document.createElement("button");
+    b.className = "pchip" + ((settings.period || "all") === p.key ? " active" : "");
+    b.textContent = p.label;
+    b.addEventListener("click", () => {
+      settings.period = p.key;
+      saveSettings();
+      rebuild();
+    });
+    frag.appendChild(b);
+  }
+  bar.insertBefore(frag, custom);
+  custom.classList.toggle("show", settings.period === "custom");
+  $("inFrom").value = settings.periodFrom || "";
+  $("inTo").value = settings.periodTo || "";
+}
+$("inFrom").addEventListener("change", (e) => { settings.periodFrom = e.target.value; saveSettings(); rebuild(); });
+$("inTo").addEventListener("change", (e) => { settings.periodTo = e.target.value; saveSettings(); rebuild(); });
+
 function renderKpis() {
   const all = DEALS;
-  const active = all.filter((d) => !["P8", "DEAD"].includes(d.phase));
+  const active = all.filter((d) => LIVE_PHASES.includes(d.phase));
+  const monthAll = DEALS_ALL.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth);
   const kpis = [
-    { label: "今月の新規アポ(3名計)", value: all.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth).length,
-      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, filter: { month: thisMonth } },
-    { label: "今週の新規アポ(3名計)", value: all.filter((d) => d.apoDate && isoWeek(d.apoDate).key === thisWeek.key).length,
-      sub: thisWeek.key, filter: { week: thisWeek.key } },
-    { label: "進行中案件(P1〜P7)", value: active.length, sub: "P8(受注)・Dead除く", filter: { active: true } },
-    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "累計", filter: { phase: "P8" } },
-    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "累計", filter: { phase: "DEAD" } },
+    { label: `獲得アポ(${periodLabel()}・3名計)`, value: all.length, sub: "クリックで一覧", filter: {} },
+    { label: "今月の新規アポ(3名計)", value: monthAll.length,
+      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, all: true, filter: { month: thisMonth } },
+    { label: "進行中(P1〜P7)", value: active.length, sub: "期間内・受注/Dead除く", filter: { active: true } },
+    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "期間内", filter: { phase: "P8" } },
+    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "期間内", filter: { phase: "DEAD" } },
   ];
   $("kpiRow").innerHTML = kpis.map((k, i) => `
     <div class="kpi" data-kpi="${i}">
@@ -639,30 +766,49 @@ function renderKpis() {
       <div class="k-sub">${esc(k.sub)}</div>
     </div>`).join("");
   $("kpiRow").querySelectorAll(".kpi").forEach((el) => {
-    el.addEventListener("click", () => openList(kpis[+el.dataset.kpi].label, filterDeals(kpis[+el.dataset.kpi].filter)));
+    el.addEventListener("click", () => {
+      const k = kpis[+el.dataset.kpi];
+      openList(k.label, filterDeals(k.filter, k.all ? DEALS_ALL : DEALS));
+    });
   });
 }
 
-function filterDeals(f) {
-  return DEALS.filter((d) => {
+function filterDeals(f, source) {
+  return (source || DEALS).filter((d) => {
     if (f.member && d.member.key !== f.member) return false;
     if (f.phase && d.phase !== f.phase) return false;
-    if (f.active && ["P8", "DEAD"].includes(d.phase)) return false;
+    if (f.active && !LIVE_PHASES.includes(d.phase)) return false;
     if (f.month && !(d.apoDate && monthKey(d.apoDate) === f.month)) return false;
     if (f.week && !(d.apoDate && isoWeek(d.apoDate).key === f.week)) return false;
     if (f.owner && d.owner !== f.owner) return false;
     if (f.account && d.account !== f.account) return false;
+    if (f.tier && d.tier !== f.tier) return false;
     return true;
   });
 }
 
 function renderMembers() {
+  $("memberNote").textContent = `期間: ${periodLabel()} / 数字をクリックすると案件一覧が開きます`;
   $("memberCards").innerHTML = MEMBERS.map((m) => {
     const s = SUM[m.key];
+    const sAll = SUM_ALL[m.key];
     const target = targetOf(m);
-    const pct = Math.min(100, Math.round((s.month.length / target) * 100));
+    const pctReal = Math.round((sAll.month.length / target) * 100);
+    const won = s.phases.P8.length, dead = s.phases.DEAD.length;
     const fNew = m.focus ? s.phases[m.focus].filter((d) => d.isNewLead).length : 0;
     const fAka = m.focus ? s.phases[m.focus].filter((d) => d.isAkapura).length : 0;
+    const chip = (p) => {
+      const n = s.phases[p].length;
+      const isFocus = m.focus === p;
+      const pct = s.total ? Math.round((n / s.total) * 100) : 0;
+      return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" title="${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
+        ${isFocus ? '<span class="star">★</span>' : ""}
+        <div class="bar" style="background:var(${PHASE_CVAR[p]})"></div>
+        <div class="p-label">${PHASE_LABEL[p]}</div>
+        <div class="p-count">${n}</div>
+        <div class="p-pct">${n > 0 ? pct + "%" : ""}</div>
+      </div>`;
+    };
     return `
     <div class="card" data-m="${esc(m.key)}">
       <div class="c-head">
@@ -671,33 +817,44 @@ function renderMembers() {
         <span class="role-badge">${esc(m.role)}</span>
         ${m.focusNote ? `<span class="focus-note">★ ${esc(m.focusNote)}</span>` : ""}
       </div>
-      <div class="c-total" data-act="total"><span class="t-num">${s.total}</span><span class="t-label">獲得アポ総数(累計)</span></div>
-      <div class="c-subline">今月 <b>${s.month.length}</b>件 / 今週 <b>${s.week.length}</b>件</div>
-      <div class="meter-block">
-        <div class="meter-label"><span>月次目標</span><span><b>${s.month.length}</b> / ${target}件(${pct}%)</span></div>
-        <div class="meter"><i style="width:${pct}%;background:${memberColor(m)}"></i></div>
+      <div class="c-hero">
+        <div class="hero-main" data-act="total">
+          <span class="t-num">${s.total}</span>
+          <span class="t-label">獲得アポ<br>(${esc(periodLabel())})</span>
+        </div>
+        <div class="hero-stats">
+          <button class="stat-pill" data-act="active"><span class="sdot" style="background:var(--p4)"></span>進行中 <b>${s.live.length}</b></button>
+          <button class="stat-pill" data-act="won"><span class="sdot" style="background:var(--good)"></span>受注 <b>${won}</b></button>
+          <button class="stat-pill" data-act="dead"><span class="sdot" style="background:var(--dead)"></span>Dead <b>${dead}</b></button>
+        </div>
       </div>
-      <div class="phase-grid">
-        ${PHASES.map((p) => {
-          const n = s.phases[p].length;
-          const isFocus = m.focus === p;
-          return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" title="${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
-            ${isFocus ? '<span class="star">★</span>' : ""}
-            <div class="bar" style="background:var(${PHASE_CVAR[p]})"></div>
-            <div class="p-label">${PHASE_LABEL[p]}</div>
-            <div class="p-count">${n}</div>
-          </div>`;
-        }).join("")}
+      <div class="meter-block">
+        <div class="meter-label">
+          <span>月次目標(今月のアポ獲得)</span>
+          <span><b>${sAll.month.length}</b> / ${target}件(${pctReal}%) ・ 今週 <b>${sAll.week.length}</b>件</span>
+        </div>
+        <div class="meter"><i style="width:${Math.min(100, pctReal)}%;background:${memberColor(m)}"></i></div>
+      </div>
+      <div class="pg-label">獲得したアポの現在フェーズ(進行中 → 受注/Dead)</div>
+      <div class="phase-flex">
+        <div class="pgroup">${LIVE_PHASES.map(chip).join("")}</div>
+        <div class="pgroup done">${chip("P8")}${chip("DEAD")}</div>
       </div>
       ${m.focus ? `<div class="lead-line">★${m.focus}内訳: <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
-      <div class="lead-line">全体: 新規リード <b>${s.newLead.length}</b>件 / アカプラ(既顧客) <b>${s.akapura.length}</b>件</div>
+      <div class="lead-line">期間内全体: 新規リード <b>${s.newLead.length}</b>件 / アカプラ(既顧客) <b>${s.akapura.length}</b>件</div>
     </div>`;
   }).join("");
 
   $("memberCards").querySelectorAll(".card").forEach((card) => {
     const mkey = card.dataset.m;
-    card.querySelector("[data-act=total]").addEventListener("click", () =>
-      openList(`${mkey} の獲得アポ一覧`, filterDeals({ member: mkey })));
+    const acts = {
+      total: () => openList(`${mkey} の獲得アポ(${periodLabel()})`, filterDeals({ member: mkey })),
+      active: () => openList(`${mkey} の進行中案件(P1〜P7)`, filterDeals({ member: mkey, active: true })),
+      won: () => openList(`${mkey} の受注(P8)`, filterDeals({ member: mkey, phase: "P8" })),
+      dead: () => openList(`${mkey} のDead案件`, filterDeals({ member: mkey, phase: "DEAD" })),
+    };
+    card.querySelectorAll("[data-act]").forEach((el) =>
+      el.addEventListener("click", acts[el.dataset.act]));
     card.querySelectorAll(".ph").forEach((el) => {
       el.addEventListener("click", () =>
         openList(`${mkey} × ${PHASE_FULL[el.dataset.ph]}`, filterDeals({ member: mkey, phase: el.dataset.ph })));
@@ -706,9 +863,14 @@ function renderMembers() {
 }
 
 function renderWeekly() {
+  // 期間に合わせて表示する週を決める(最大16週)
+  const { from, to } = periodRange();
+  const endMon = mondayOf(to && to < today ? to : today);
+  let count = 8;
+  if (from) count = Math.min(16, Math.max(1, Math.round((endMon - mondayOf(from)) / (7 * 864e5)) + 1));
   const weeks = [];
-  for (let i = 7; i >= 0; i--) {
-    const d = new Date(thisMonday); d.setDate(d.getDate() - i * 7);
+  for (let i = count - 1; i >= 0; i--) {
+    const d = addDays(endMon, -i * 7);
     weeks.push({ key: isoWeek(d).key, label: `${fmtMD(d)}週` });
   }
   const counts = weeks.map((w) => MEMBERS.map((m) =>
@@ -733,11 +895,84 @@ function renderWeekly() {
   });
 }
 
-/* 週次スナップショット */
+/* ---------- Tier別 獲得比率 ---------- */
+function renderTiers() {
+  const tiersInData = [...new Set(DEALS.map((d) => d.tier))]
+    .sort((a, b) => (TIER_ORDER.indexOf(a) + 100 * (TIER_ORDER.indexOf(a) < 0)) - (TIER_ORDER.indexOf(b) + 100 * (TIER_ORDER.indexOf(b) < 0)));
+  const rowFor = (label, list, colorDot, filterBase) => {
+    const total = list.length;
+    const segs = tiersInData.map((t) => ({ t, n: list.filter((d) => d.tier === t).length }))
+      .filter((s) => s.n > 0);
+    const segHtml = total === 0 ? "" : segs.map((s) => {
+      const pct = (s.n / total) * 100;
+      return `<div class="seg" data-tier="${esc(s.t)}" style="width:${pct}%;background:${tierColor(s.t)}"
+        title="${esc(label)} ${esc(s.t)}: ${s.n}件(${Math.round(pct)}%)"></div>`;
+    }).join("");
+    const bd = segs.map((s) =>
+      `<span data-tier="${esc(s.t)}"><span class="dot" style="background:${tierColor(s.t)}"></span>${esc(s.t)} <b>${s.n}</b>件(${Math.round((s.n / total) * 100)}%)</span>`).join("");
+    return `<div class="stack-block" data-row="${esc(label)}">
+      <div class="stack-head">
+        <span class="s-name">${colorDot ? `<span class="dot" style="background:${colorDot}"></span>` : ""}${esc(label)}</span>
+        <span class="s-total">${total}件</span>
+      </div>
+      <div class="stack">${segHtml}</div>
+      <div class="stack-breakdown">${bd || '<span style="color:var(--muted)">案件なし</span>'}</div>
+    </div>`;
+  };
+  $("tierCard").innerHTML =
+    rowFor("3名合計", DEALS, null, {}) +
+    MEMBERS.map((m) => rowFor(m.key, SUM[m.key].list, memberColor(m), { member: m.key })).join("");
+  $("tierCard").querySelectorAll(".stack-block").forEach((block) => {
+    const label = block.dataset.row;
+    const mem = MEMBERS.find((m) => m.key === label);
+    block.querySelectorAll("[data-tier]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const f = { tier: el.dataset.tier };
+        if (mem) f.member = mem.key;
+        openList(`${label} × ${el.dataset.tier} の案件`, filterDeals(f));
+      });
+    });
+  });
+}
+
+/* ---------- 主担当別(フェーズ内訳つき) ---------- */
+function renderOwners() {
+  const map = new Map();
+  for (const d of DEALS) {
+    if (!map.has(d.owner)) map.set(d.owner, { total: 0, phases: Object.fromEntries(PHASES.map((p) => [p, 0])) });
+    const o = map.get(d.owner);
+    o.total++;
+    o.phases[d.phase]++;
+  }
+  const owners = [...map.entries()].sort((a, b) => b[1].total - a[1].total);
+  $("ownerTable").innerHTML = `
+    <thead><tr><th>主担当者</th><th class="num">案件数</th>
+      ${PHASES.map((p) => `<th class="num" title="${esc(PHASE_FULL[p])}">${PHASE_LABEL[p] === "受注" ? "P8(受注)" : PHASE_LABEL[p]}</th>`).join("")}
+    </tr></thead>
+    <tbody>${owners.map(([name, o]) => `
+      <tr>
+        <td class="cellink" data-owner="${esc(name)}">${esc(name)}</td>
+        <td class="num cellink" data-owner="${esc(name)}"><b>${o.total}</b></td>
+        ${PHASES.map((p) => o.phases[p]
+          ? `<td class="num cellink" data-owner="${esc(name)}" data-ph="${p}">${o.phases[p]}</td>`
+          : `<td class="num dim">0</td>`).join("")}
+      </tr>`).join("") || `<tr><td colspan="11" style="color:var(--muted)">案件がありません</td></tr>`}
+    </tbody>`;
+  $("ownerTable").querySelectorAll("td.cellink").forEach((td) => {
+    td.addEventListener("click", () => {
+      const f = { owner: td.dataset.owner };
+      let title = `主担当: ${td.dataset.owner} の案件`;
+      if (td.dataset.ph) { f.phase = td.dataset.ph; title += `(${PHASE_FULL[td.dataset.ph]})`; }
+      openList(title, filterDeals(f));
+    });
+  });
+}
+
+/* 週次スナップショット(全期間ベース) */
 function loadSnaps() { try { return JSON.parse(localStorage.getItem(LS.snaps) || "{}"); } catch { return {}; } }
 function currentSnap() {
   return Object.fromEntries(MEMBERS.map((m) => {
-    const s = SUM[m.key];
+    const s = SUM_ALL[m.key];
     return [m.key, { total: s.total, ...Object.fromEntries(PHASES.map((p) => [p, s.phases[p].length])) }];
   }));
 }
@@ -761,62 +996,6 @@ function renderSnaps() {
         ${MEMBERS.map((m) => `<td>${cell(k === thisWeek.key ? cur[m.key] : snaps[k]?.[m.key])}</td>`).join("")}
       </tr>`).join("") || `<tr><td colspan="4" style="color:var(--muted)">まだスナップショットがありません(週をまたいで開くと蓄積されます)</td></tr>`}
     </tbody>`;
-}
-
-function renderOwners() {
-  const map = new Map();
-  for (const d of DEALS) {
-    if (!map.has(d.owner)) map.set(d.owner, { total: 0, active: 0, won: 0, dead: 0 });
-    const o = map.get(d.owner);
-    o.total++;
-    if (d.phase === "P8") o.won++;
-    else if (d.phase === "DEAD") o.dead++;
-    else o.active++;
-  }
-  const owners = [...map.entries()].sort((a, b) => b[1].total - a[1].total);
-  $("ownerTable").innerHTML = `
-    <thead><tr><th>主担当者</th><th class="num">案件数</th><th class="num">進行中(P1〜P7)</th><th class="num">受注(P8)</th><th class="num">Dead</th></tr></thead>
-    <tbody>${owners.map(([name, o]) => `
-      <tr class="rowlink" data-owner="${esc(name)}">
-        <td>${esc(name)}</td><td class="num"><b>${o.total}</b></td>
-        <td class="num">${o.active}</td><td class="num">${o.won}</td><td class="num">${o.dead}</td>
-      </tr>`).join("")}
-    </tbody>`;
-  $("ownerTable").querySelectorAll("tr.rowlink").forEach((tr) => {
-    tr.addEventListener("click", () =>
-      openList(`主担当: ${tr.dataset.owner} の案件`, filterDeals({ owner: tr.dataset.owner })));
-  });
-}
-
-function renderTiers() {
-  const byTier = new Map();
-  for (const d of DEALS) {
-    if (!byTier.has(d.tier)) byTier.set(d.tier, new Map());
-    const comp = byTier.get(d.tier);
-    comp.set(d.account, (comp.get(d.account) || 0) + 1);
-  }
-  const tiers = [...byTier.keys()].sort((a, b) => a.localeCompare(b, "ja"));
-  const SHOW = 30;
-  $("tierGroups").innerHTML = tiers.map((t) => {
-    const comps = [...byTier.get(t).entries()].sort((a, b) => b[1] - a[1]);
-    const total = comps.reduce((s, [, n]) => s + n, 0);
-    const chip = ([c, n], hid) => `<button class="comp-chip" data-acc="${esc(c)}" ${hid ? "hidden data-more" : ""}>${esc(c)} <b>${n}</b></button>`;
-    return `<div class="tier-row">
-      <div class="tier-name">${esc(t)}<small>${comps.length}社 / ${total}案件</small></div>
-      ${comps.slice(0, SHOW).map((e) => chip(e, false)).join("")}
-      ${comps.slice(SHOW).map((e) => chip(e, true)).join("")}
-      ${comps.length > SHOW ? `<button class="comp-chip" data-expand style="color:var(--muted)">+ 他${comps.length - SHOW}社を表示</button>` : ""}
-    </div>`;
-  }).join("") || `<div class="tier-row"><span class="hint">データがありません</span></div>`;
-  $("tierGroups").querySelectorAll(".comp-chip[data-acc]").forEach((el) => {
-    el.addEventListener("click", () => openList(`${el.dataset.acc} の案件`, filterDeals({ account: el.dataset.acc })));
-  });
-  $("tierGroups").querySelectorAll("[data-expand]").forEach((el) => {
-    el.addEventListener("click", () => {
-      el.closest(".tier-row").querySelectorAll("[data-more]").forEach((c) => { c.hidden = false; });
-      el.remove();
-    });
-  });
 }
 
 /* ---------- 案件一覧 ---------- */
@@ -938,21 +1117,21 @@ $("btnTheme").addEventListener("click", () => {
 let RAW_ROWS = [];
 let TIER_MAP = {};
 
-function renderAll() {
+function rebuild() {
+  settings = loadSettings();
+  DEALS_ALL = buildDeals(RAW_ROWS, TIER_MAP);
+  DEALS = DEALS_ALL.filter(inPeriod);
   SUM = summarize(DEALS);
+  SUM_ALL = summarize(DEALS_ALL);
   renderHeader();
+  renderPeriodBar();
   renderKpis();
   renderMembers();
   renderWeekly();
+  renderTiers();
+  renderOwners();
   saveSnapshot();
   renderSnaps();
-  renderOwners();
-  renderTiers();
-}
-function rebuild() {
-  settings = loadSettings();
-  DEALS = buildDeals(RAW_ROWS, TIER_MAP);
-  renderAll();
 }
 function useFallback(errMsg) {
   dataState.error = errMsg || "";
