@@ -81,9 +81,12 @@
     border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px;
   }
   .btn:hover { border-color: var(--baseline); }
-  .meta-line { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
-  .sample-banner {
-    background: var(--surface); border: 1px solid var(--focus-ring);
+  .btn[disabled] { opacity: .5; cursor: wait; }
+  .meta-line { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; }
+  .toolbar label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .status-banner {
+    border: 1px solid var(--focus-ring); background: var(--surface);
     border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--ink-2);
     margin-bottom: 16px;
   }
@@ -115,9 +118,9 @@
   .c-name { font-size: 16px; font-weight: 700; white-space: nowrap; }
   .role-badge {
     font-size: 11px; color: var(--ink-2); border: 1px solid var(--border);
-    border-radius: 999px; padding: 1px 8px;
+    border-radius: 999px; padding: 1px 8px; white-space: nowrap;
   }
-  .focus-note { margin-left: auto; font-size: 11px; color: var(--ink-2); }
+  .focus-note { margin-left: auto; font-size: 11px; color: var(--ink-2); text-align: right; }
   .c-total { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; cursor: pointer; }
   .c-total:hover .t-num { text-decoration: underline; }
   .t-num { font-size: 34px; font-weight: 700; }
@@ -147,7 +150,7 @@
   .ph .star { position: absolute; top: -9px; right: -4px; font-size: 11px; }
   .lead-line { margin-top: 9px; font-size: 12px; color: var(--ink-2); }
   .lead-line b { color: var(--ink); }
-  .badge { display: inline-block; font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; margin-right: 4px; color: var(--ink-2); }
+  .badge { display: inline-block; font-size: 11px; border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; margin-right: 4px; color: var(--ink-2); white-space: nowrap; }
   .badge.new { border-color: var(--good); color: var(--good); }
 
   /* ---------- tables ---------- */
@@ -193,7 +196,7 @@
   .overlay.open { display: flex; }
   .modal {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    width: min(1060px, 100%); max-height: 88vh; display: flex; flex-direction: column;
+    width: min(1120px, 100%); max-height: 88vh; display: flex; flex-direction: column;
   }
   .modal-hd { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--grid); }
   .modal-hd h3 { font-size: 15px; }
@@ -225,15 +228,18 @@
     <h1>ISモニタリング</h1>
     <span class="week-label" id="weekLabel"></span>
     <div class="hd-right">
+      <button class="btn" id="btnReload">↻ 最新データに更新</button>
       <button class="btn" id="btnImport">CSV取込</button>
       <button class="btn" id="btnSettings">設定</button>
       <button class="btn" id="btnTheme" title="ライト/ダーク切替">◐</button>
     </div>
   </header>
   <div class="meta-line" id="metaLine"></div>
-  <div class="sample-banner" id="sampleBanner" hidden>
-    ⚠ 現在<b>サンプルデータ</b>を表示しています。「CSV取込」から SF エクスポート(CSV/TSV)を読み込むか、<code>data/deals.js</code> を実データに差し替えてください。
+  <div class="toolbar">
+    <label><input type="checkbox" id="chkKeizoku"> 継続・再計上案件も含める</label>
+    <a id="sheetLink" href="#" target="_blank" rel="noopener" style="color:var(--muted)">元スプレッドシートを開く ↗</a>
   </div>
+  <div class="status-banner" id="statusBanner" hidden></div>
 
   <div class="kpi-row" id="kpiRow"></div>
 
@@ -243,7 +249,7 @@
   </section>
 
   <section>
-    <h2>週次推移(新規アポ数)<span class="h-note">作成日ベース・直近8週</span></h2>
+    <h2>週次推移(新規アポ数)<span class="h-note">初回アポイント日ベース・直近8週</span></h2>
     <div class="chart-card">
       <div class="legend" id="wLegend"></div>
       <div class="wchart" id="wChart"></div>
@@ -262,7 +268,7 @@
   </section>
 
   <section>
-    <h2>Tier別 企業</h2>
+    <h2>Tier別 企業<span class="h-note">スプレッドシートに「tier」タブ(取引先名 / Tier の2列)を作ると自動反映されます</span></h2>
     <div class="tier-groups" id="tierGroups"></div>
   </section>
 </div>
@@ -300,26 +306,24 @@
 <!-- CSV取込モーダル -->
 <div class="overlay" id="importOverlay">
   <div class="modal" style="width:min(680px,100%)">
-    <div class="modal-hd"><h3>CSV / TSV 取込</h3><button class="btn x" onclick="closeOverlay('importOverlay')">閉じる</button></div>
+    <div class="modal-hd"><h3>CSV / TSV 取込(オフライン用の予備)</h3><button class="btn x" onclick="closeOverlay('importOverlay')">閉じる</button></div>
     <div class="form-body">
+      <div class="hint" style="margin-bottom:12px">
+        通常はスプレッドシート(all_cases)から自動で読み込みます。シートに接続できない場合のみ、ここから手動で取り込んでください。
+      </div>
       <div class="form-row">
-        <label>ファイルを選択(SFエクスポートのCSV、またはスプレッドシートからコピーしたTSV)</label>
+        <label>ファイルを選択(CSV/TSV)</label>
         <input type="file" id="inFile" accept=".csv,.tsv,.txt">
       </div>
       <div class="form-row">
         <label>または、スプレッドシートの範囲(ヘッダー行含む)をそのまま貼り付け</label>
-        <textarea id="inPaste" placeholder="初回アポイント取得者	主担当者	取引先名	案件名	フェーズ	作成日	案件ID	Tier	リード区分	商談種別&#10;林我玖	岡部 瑛美	○○株式会社	20260701_○○様_△△支援	03-Validating Benefits & Value	2026/07/01	006dc00000xxxxx	Tier1	新規	01商談"></textarea>
-      </div>
-      <div class="hint" style="margin-bottom:12px">
-        必須列: 初回アポイント取得者 / 主担当者 / 取引先名 / 案件名 / フェーズ / 作成日 / 案件ID。
-        任意列: Tier / リード区分(新規・既存) / 商談種別(01商談・アカプラ等)。
-        同一案件IDの重複行(候補者リスト分)は自動で1件にまとめます。取込データはこのブラウザに保存されます。
+        <textarea id="inPaste" placeholder="all_cases タブの範囲をコピーして貼り付け(ヘッダー行含む)"></textarea>
       </div>
       <div class="hint" id="importMsg"></div>
     </div>
     <div class="form-actions">
       <button class="btn primary" id="btnDoImport">取り込む</button>
-      <button class="btn" id="btnClearImport">取込データを破棄してファイルのデータに戻す</button>
+      <button class="btn" id="btnClearImport">手動取込データを破棄</button>
     </div>
   </div>
 </div>
@@ -327,38 +331,52 @@
 <script src="data/deals.js"></script>
 <script>
 "use strict";
+/* ================= データソース(Google スプレッドシート) ================= */
+const SHEET_ID = "1_TJRjTq8PRg0FTs36CbB5I45EKrccVEkpqWw2UO7Stc";
+const SHEET_NAME = "all_cases";   // 案件データのタブ
+const TIER_SHEET = "tier";        // 任意: 取引先名/Tier の2列タブがあれば読む
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+
 /* ================= 設定 ================= */
 const MEMBERS = [
-  { key: "林我玖",   short: "がく", role: "IS",   cvar: "--m1", focus: "P3",
+  { key: "林我玖",   role: "IS",   cvar: "--m1", focus: "P3",
     focusNote: "P3を注力モニタリング(アカプラは01商談でも可)" },
-  { key: "奈良",     short: "奈良", role: "IS",   cvar: "--m2", focus: "P1",
+  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1",
     focusNote: "P1を注力モニタリング" },
-  { key: "松村佳保", short: "松村", role: "マーケ", cvar: "--m3", focus: null, focusNote: "" },
+  { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, focusNote: "" },
 ];
 const PHASES = ["P1","P2","P3","P4","P5","P6","P7","P8","DEAD"];
 const PHASE_LABEL = { P1:"P1", P2:"P2", P3:"P3", P4:"P4", P5:"P5", P6:"P6", P7:"P7", P8:"P8", DEAD:"Dead" };
 const PHASE_FULL = {
-  P1:"01 (初回商談/Qualifying)", P2:"02-Determining Problem,Impact,Ideal",
+  P1:"01-Identifying an Opportunity", P2:"02-Determining Problem,Impact,Ideal",
   P3:"03-Validating Benefits & Value", P4:"04-Confirming Value With Power",
-  P5:"05-Negotiating $$ & Mutual Plan", P6:"06", P7:"07-Pending", P8:"08-Closed(受注)",
+  P5:"05-Negotiating $$ & Mutual Plan", P6:"06-Finalizing Closure", P7:"07-Pending", P8:"08-Closed(受注)",
   DEAD:"DEAD(失注)",
 };
 const PHASE_CVAR = { P1:"--p1",P2:"--p2",P3:"--p3",P4:"--p4",P5:"--p5",P6:"--p6",P7:"--p7",P8:"--p8",DEAD:"--dead" };
 const DEFAULT_TARGET = 10;
 
-const LS = { data: "ismon-data-v1", settings: "ismon-settings-v1", snaps: "ismon-snaps-v1", theme: "ismon-theme" };
+const LS = {
+  cache: "ismon-live-cache-v2", manual: "ismon-manual-v2",
+  settings: "ismon-settings-v1", snaps: "ismon-snaps-v1", theme: "ismon-theme",
+};
 
 /* ================= ユーティリティ ================= */
 const $ = (id) => document.getElementById(id);
 const norm = (s) => String(s ?? "").replace(/[\s　]/g, "");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
-function parseDate(s) {
-  if (!s) return null;
-  const m = String(s).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-  if (!m) return null;
-  const d = new Date(+m[1], +m[2] - 1, +m[3]);
-  return isNaN(d) ? null : d;
+function parseDateStr(s) {
+  if (s == null || s === "") return null;
+  if (s instanceof Date) return s;
+  const str = String(s).trim();
+  const g = str.match(/^Date\((\d+),(\d+),(\d+)/);       // gviz形式 Date(2026,6,16)
+  if (g) return new Date(+g[1], +g[2], +g[3]);
+  const m = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/); // 2026/07/16
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  const n = Number(str);                                   // Excelシリアル値
+  if (isFinite(n) && n > 20000 && n < 80000) return new Date(1899, 11, 30 + Math.floor(n));
+  return null;
 }
 function isoWeek(d) {
   const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -374,6 +392,7 @@ function mondayOf(d) {
   return t;
 }
 const fmtMD = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+const fmtYMD = (d) => `${d.getFullYear()}/${fmtMD(d)}`;
 const monthKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
 function parsePhase(raw) {
@@ -383,6 +402,56 @@ function parsePhase(raw) {
   if (m) return "P" + (m[1] || m[2]);
   return null;
 }
+
+/* ---------- gviz(スプレッドシート)読み込み ---------- */
+async function fetchGvizRows(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url, { credentials: "omit" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  const start = text.indexOf("("), end = text.lastIndexOf(")");
+  if (start < 0 || end < 0) throw new Error("gviz応答の形式が不正です(シートの共有設定を確認)");
+  const json = JSON.parse(text.slice(start + 1, end));
+  if (json.status === "error") throw new Error((json.errors?.[0]?.detailed_message) || "gvizエラー");
+  const labels = json.table.cols.map((c) => (c.label || "").trim());
+  return json.table.rows.map((r) => {
+    const o = {};
+    (r.c || []).forEach((cell, i) => {
+      if (!labels[i]) return;
+      o[labels[i]] = cell == null ? "" : (cell.v ?? cell.f ?? "");
+    });
+    return o;
+  });
+}
+
+/* ---------- 列名マッピング(gviz / CSVどちらでも) ---------- */
+const COLS = {
+  apo:     ["初回アポイント取得者","初回アポ取得者","アポイント取得者","アポ取得者"],
+  owner:   ["主担当者","所有者名","所有者"],
+  account: ["取引先名","取引先"],
+  name:    ["案件名","商談名"],
+  phase:   ["フェーズ"],
+  apoDate: ["初回アポイント日","作成日"],
+  id:      ["案件ID","案件 ID","商談ID"],
+  shinki:  ["新規/継続","新規／継続","新規継続"],
+  sisaku:  ["施策区分_2","施策区分"],
+  deadReason: ["DEAD理由"],
+  caseType: ["案件種別"],
+  focusFlag: ["注力案件"],
+  tier:    ["Tier","TIER","tier","ティア"],
+  lead:    ["リード区分","リード種別","新規リード"],
+  dtype:   ["商談種別","アポ種別"],
+};
+function pick(row, keyList) {
+  for (const k of keyList) {
+    if (row[k] != null && row[k] !== "") return row[k];
+    const nk = Object.keys(row).find((h) => norm(h) === norm(k));
+    if (nk && row[nk] !== "") return row[nk];
+  }
+  return "";
+}
+
+/* ---------- CSV/TSVパース(手動取込用) ---------- */
 function parseDelimited(text) {
   const delim = text.split("\n")[0].includes("\t") ? "\t" : ",";
   const rows = []; let row = [], field = "", inQ = false;
@@ -404,99 +473,78 @@ function parseDelimited(text) {
   if (row.some((f) => f.trim() !== "")) rows.push(row);
   return rows;
 }
-const COLS = {
-  apo:   ["初回アポイント取得者","初回アポ取得者","アポイント取得者","アポ取得者"],
-  owner: ["主担当者","所有者名","所有者"],
-  account: ["取引先名","取引先"],
-  name:  ["案件名","商談名"],
-  phase: ["フェーズ"],
-  created: ["作成日"],
-  id:    ["案件ID","案件 ID","商談ID"],
-  tier:  ["Tier","TIER","tier","ティア"],
-  lead:  ["リード区分","リード種別","新規リード","新規既存"],
-  dtype: ["商談種別","アポ種別","種別"],
-};
-function headerMap(headers) {
-  const hn = headers.map(norm);
-  const map = {};
-  for (const [k, cands] of Object.entries(COLS)) {
-    for (const c of cands) {
-      const i = hn.findIndex((h) => h === norm(c) || h.includes(norm(c)));
-      if (i >= 0) { map[k] = i; break; }
-    }
-  }
-  return map;
-}
-function rowsFromDelimited(text) {
+function objectsFromDelimited(text) {
   const rows = parseDelimited(text);
   if (rows.length < 2) throw new Error("ヘッダー行+データ行が必要です");
-  const map = headerMap(rows[0]);
-  if (map.apo == null || map.name == null || map.phase == null)
-    throw new Error("必須列(初回アポイント取得者・案件名・フェーズ)が見つかりません");
-  return rows.slice(1).map((r) => ({
-    "初回アポイント取得者": r[map.apo] ?? "",
-    "主担当者": map.owner != null ? r[map.owner] ?? "" : "",
-    "取引先名": map.account != null ? r[map.account] ?? "" : "",
-    "案件名": r[map.name] ?? "",
-    "フェーズ": r[map.phase] ?? "",
-    "作成日": map.created != null ? r[map.created] ?? "" : "",
-    "案件ID": map.id != null ? r[map.id] ?? "" : "",
-    "Tier": map.tier != null ? r[map.tier] ?? "" : "",
-    "リード区分": map.lead != null ? r[map.lead] ?? "" : "",
-    "商談種別": map.dtype != null ? r[map.dtype] ?? "" : "",
-  }));
+  const headers = rows[0].map((h) => h.trim());
+  return rows.slice(1).map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? ""])));
 }
 
-/* ================= データ読み込み ================= */
+/* ================= 設定・状態 ================= */
 function loadSettings() {
-  try { return { sfBase: "", targets: {}, ...JSON.parse(localStorage.getItem(LS.settings) || "{}") }; }
-  catch { return { sfBase: "", targets: {} }; }
+  try { return { sfBase: "", targets: {}, includeKeizoku: false, ...JSON.parse(localStorage.getItem(LS.settings) || "{}") }; }
+  catch { return { sfBase: "", targets: {}, includeKeizoku: false }; }
 }
 let settings = loadSettings();
+const saveSettings = () => localStorage.setItem(LS.settings, JSON.stringify(settings));
 const targetOf = (m) => Number(settings.targets[m.key]) > 0 ? Number(settings.targets[m.key]) : DEFAULT_TARGET;
 
-function loadRawData() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS.data) || "null");
-    if (saved && Array.isArray(saved.rows) && saved.rows.length) return { ...saved, source: "browser" };
-  } catch { /* 破損時はファイルへフォールバック */ }
-  const d = window.DEALS_DATA || { rows: [] };
-  return { rows: d.rows || [], isSample: !!d.isSample, updatedAt: d.updatedAt || "", source: "file" };
-}
-
-function buildDeals(raw) {
+/* ================= 案件の正規化 ================= */
+function buildDeals(rows, tierMap) {
   const memberOf = (apoName) => {
     const n = norm(apoName);
     if (!n) return null;
     return MEMBERS.find((m) => n.includes(norm(m.key))) || null;
   };
   const seen = new Map();
-  for (const r of raw.rows) {
-    const member = memberOf(r["初回アポイント取得者"]);
+  for (const r of rows) {
+    const member = memberOf(pick(r, COLS.apo));
     if (!member) continue;
-    const phase = parsePhase(r["フェーズ"]);
+    const phase = parsePhase(pick(r, COLS.phase));
     if (!phase) continue;
-    const id = String(r["案件ID"] || "").trim();
-    const key = id || norm(r["案件名"]);
-    if (seen.has(key)) continue; // 候補者リスト分の重複行を除外
-    const lead = String(r["リード区分"] || "").trim();
-    const dtype = String(r["商談種別"] || "").trim();
+    const id = String(pick(r, COLS.id)).trim();
+    const name = String(pick(r, COLS.name)).trim();
+    const key = id || norm(name);
+    if (seen.has(key)) continue; // 重複行を除外
+    const shinki = String(pick(r, COLS.shinki)).trim();
+    const leadRaw = String(pick(r, COLS.lead)).trim();
+    const dtype = String(pick(r, COLS.dtype)).trim();
+    const account = String(pick(r, COLS.account)).trim() || "(不明)";
+    const isKeizoku = /継続|再計上/.test(shinki);
     seen.set(key, {
       member, phase,
-      phaseRaw: String(r["フェーズ"] || "").trim(),
-      owner: String(r["主担当者"] || "").trim() || "(未設定)",
-      account: String(r["取引先名"] || "").trim() || "(不明)",
-      name: String(r["案件名"] || "").trim(),
-      created: parseDate(r["作成日"]),
+      phaseRaw: String(pick(r, COLS.phase)).trim(),
+      owner: String(pick(r, COLS.owner)).trim() || "(未設定)",
+      account, name,
+      apoDate: parseDateStr(pick(r, COLS.apoDate)),
       id,
-      tier: String(r["Tier"] || "").trim() || "Tier未設定",
-      isNewLead: /新規/.test(lead),
-      leadRaw: lead,
-      isAkapura: /アカプラ/.test(dtype) || /既存/.test(lead),
-      dtype,
+      tier: tierMap[norm(account)] || String(pick(r, COLS.tier)).trim() || "Tier未設定",
+      shinki,
+      isKeizoku,
+      isNewLead: shinki === "新規案件" || (!shinki && /新規/.test(leadRaw)),
+      isAkapura: shinki === "既顧客新規案件" || /アカプラ/.test(dtype) || (!shinki && /既存/.test(leadRaw)),
+      sisaku: String(pick(r, COLS.sisaku)).trim(),
+      deadReason: String(pick(r, COLS.deadReason)).trim(),
+      caseType: String(pick(r, COLS.caseType)).trim(),
+      isFocusDeal: /^1/.test(String(pick(r, COLS.focusFlag))),
     });
   }
-  return [...seen.values()];
+  let deals = [...seen.values()];
+  if (!settings.includeKeizoku) deals = deals.filter((d) => !d.isKeizoku);
+  return deals;
+}
+
+function buildTierMap(rows) {
+  const map = {};
+  for (const r of rows || []) {
+    const keys = Object.keys(r);
+    const accKey = keys.find((k) => /取引先|会社|企業/.test(k)) || keys[0];
+    const tierKey = keys.find((k) => /tier|ティア/i.test(k)) || keys[1];
+    if (!accKey || !tierKey) continue;
+    const acc = norm(r[accKey]); const t = String(r[tierKey] ?? "").trim();
+    if (acc && t) map[acc] = t;
+  }
+  return map;
 }
 
 /* ================= 集計 ================= */
@@ -513,8 +561,8 @@ function summarize(deals) {
     byMember[m.key] = {
       member: m, list, phases,
       total: list.length,
-      month: list.filter((d) => d.created && monthKey(d.created) === thisMonth),
-      week: list.filter((d) => d.created && isoWeek(d.created).key === thisWeek.key),
+      month: list.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth),
+      week: list.filter((d) => d.apoDate && isoWeek(d.apoDate).key === thisWeek.key),
       newLead: list.filter((d) => d.isNewLead),
       akapura: list.filter((d) => d.isAkapura),
     };
@@ -525,26 +573,43 @@ function summarize(deals) {
 /* ================= 描画 ================= */
 let DEALS = [];
 let SUM = {};
-let rawInfo = {};
+let dataState = { source: "", fetchedAt: null, error: "" };
 
 function memberColor(m) { return `var(${m.cvar})`; }
 
 function renderHeader() {
   const sun = new Date(thisMonday); sun.setDate(sun.getDate() + 6);
   $("weekLabel").textContent = `今週: ${thisWeek.key}(${fmtMD(thisMonday)}〜${fmtMD(sun)})`;
-  const src = rawInfo.source === "browser" ? "ブラウザ取込データ" : "data/deals.js";
+  $("sheetLink").href = SHEET_URL;
+  const srcLabel = {
+    live: "スプレッドシート(all_cases)と接続中",
+    cache: "スプレッドシートのキャッシュ",
+    manual: "手動取込データ",
+    sample: "サンプルデータ(data/deals.js)",
+  }[dataState.source] || "";
   $("metaLine").textContent =
-    `データ: ${src}${rawInfo.updatedAt ? ` / 更新日 ${rawInfo.updatedAt}` : ""} / 対象案件 ${DEALS.length}件(初回アポイント取得者: ${MEMBERS.map((m) => m.key).join("・")})`;
-  $("sampleBanner").hidden = !rawInfo.isSample;
+    `データ: ${srcLabel}${dataState.fetchedAt ? ` / 取得 ${dataState.fetchedAt}` : ""} / 対象案件 ${DEALS.length}件(初回アポイント取得者: ${MEMBERS.map((m) => m.key).join("・")}${settings.includeKeizoku ? "" : " / 継続・再計上案件を除く"})`;
+  const banner = $("statusBanner");
+  if (dataState.error) {
+    banner.hidden = false;
+    banner.innerHTML = `⚠ スプレッドシートに接続できませんでした(${esc(dataState.error)})。` +
+      (dataState.source === "cache" ? "前回取得したキャッシュを表示しています。" :
+       dataState.source === "manual" ? "手動取込データを表示しています。" :
+       dataState.source === "sample" ? "サンプルデータを表示しています。シートの共有設定(リンクを知っている全員が閲覧可)を確認してください。" : "");
+  } else if (dataState.source === "sample") {
+    banner.hidden = false;
+    banner.textContent = "⚠ サンプルデータを表示しています。";
+  } else banner.hidden = true;
+  $("chkKeizoku").checked = !!settings.includeKeizoku;
 }
 
 function renderKpis() {
   const all = DEALS;
   const active = all.filter((d) => !["P8", "DEAD"].includes(d.phase));
   const kpis = [
-    { label: "今月の新規アポ(3名計)", value: all.filter((d) => d.created && monthKey(d.created) === thisMonth).length,
+    { label: "今月の新規アポ(3名計)", value: all.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth).length,
       sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, filter: { month: thisMonth } },
-    { label: "今週の新規アポ(3名計)", value: all.filter((d) => d.created && isoWeek(d.created).key === thisWeek.key).length,
+    { label: "今週の新規アポ(3名計)", value: all.filter((d) => d.apoDate && isoWeek(d.apoDate).key === thisWeek.key).length,
       sub: thisWeek.key, filter: { week: thisWeek.key } },
     { label: "進行中案件(P1〜P7)", value: active.length, sub: "P8(受注)・Dead除く", filter: { active: true } },
     { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "累計", filter: { phase: "P8" } },
@@ -566,8 +631,8 @@ function filterDeals(f) {
     if (f.member && d.member.key !== f.member) return false;
     if (f.phase && d.phase !== f.phase) return false;
     if (f.active && ["P8", "DEAD"].includes(d.phase)) return false;
-    if (f.month && !(d.created && monthKey(d.created) === f.month)) return false;
-    if (f.week && !(d.created && isoWeek(d.created).key === f.week)) return false;
+    if (f.month && !(d.apoDate && monthKey(d.apoDate) === f.month)) return false;
+    if (f.week && !(d.apoDate && isoWeek(d.apoDate).key === f.week)) return false;
     if (f.owner && d.owner !== f.owner) return false;
     if (f.account && d.account !== f.account) return false;
     return true;
@@ -579,9 +644,8 @@ function renderMembers() {
     const s = SUM[m.key];
     const target = targetOf(m);
     const pct = Math.min(100, Math.round((s.month.length / target) * 100));
-    const focusCount = m.focus ? s.phases[m.focus].length : null;
-    const p3New = m.focus ? s.phases[m.focus].filter((d) => d.isNewLead).length : 0;
-    const p3Aka = m.focus ? s.phases[m.focus].filter((d) => d.isAkapura).length : 0;
+    const fNew = m.focus ? s.phases[m.focus].filter((d) => d.isNewLead).length : 0;
+    const fAka = m.focus ? s.phases[m.focus].filter((d) => d.isAkapura).length : 0;
     return `
     <div class="card" data-m="${esc(m.key)}">
       <div class="c-head">
@@ -608,8 +672,8 @@ function renderMembers() {
           </div>`;
         }).join("")}
       </div>
-      ${m.focus ? `<div class="lead-line">★${m.focus}内訳: <span class="badge new">新規リード</span><b>${p3New}</b>件 / <span class="badge">アカプラ・既存</span><b>${p3Aka}</b>件</div>` : ""}
-      <div class="lead-line">全体: 新規リード <b>${s.newLead.length}</b>件 / アカプラ・既存 <b>${s.akapura.length}</b>件</div>
+      ${m.focus ? `<div class="lead-line">★${m.focus}内訳: <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
+      <div class="lead-line">全体: 新規リード <b>${s.newLead.length}</b>件 / アカプラ(既顧客) <b>${s.akapura.length}</b>件</div>
     </div>`;
   }).join("");
 
@@ -631,7 +695,7 @@ function renderWeekly() {
     weeks.push({ key: isoWeek(d).key, label: `${fmtMD(d)}週` });
   }
   const counts = weeks.map((w) => MEMBERS.map((m) =>
-    SUM[m.key].list.filter((d) => d.created && isoWeek(d.created).key === w.key).length));
+    SUM[m.key].list.filter((d) => d.apoDate && isoWeek(d.apoDate).key === w.key).length));
   const max = Math.max(1, ...counts.flat());
   $("wLegend").innerHTML = MEMBERS.map((m) =>
     `<span><span class="dot" style="background:${memberColor(m)}"></span>${esc(m.key)}</span>`).join("");
@@ -654,23 +718,23 @@ function renderWeekly() {
 
 /* 週次スナップショット */
 function loadSnaps() { try { return JSON.parse(localStorage.getItem(LS.snaps) || "{}"); } catch { return {}; } }
-function saveSnapshot() {
-  if (rawInfo.isSample) return; // サンプルデータは履歴に残さない
-  const snaps = loadSnaps();
-  snaps[thisWeek.key] = Object.fromEntries(MEMBERS.map((m) => {
+function currentSnap() {
+  return Object.fromEntries(MEMBERS.map((m) => {
     const s = SUM[m.key];
     return [m.key, { total: s.total, ...Object.fromEntries(PHASES.map((p) => [p, s.phases[p].length])) }];
   }));
+}
+function saveSnapshot() {
+  if (dataState.source === "sample") return; // サンプルは履歴に残さない
+  const snaps = loadSnaps();
+  snaps[thisWeek.key] = currentSnap();
   localStorage.setItem(LS.snaps, JSON.stringify(snaps));
 }
 function renderSnaps() {
   const snaps = loadSnaps();
   const keys = Object.keys(snaps).sort().reverse().slice(0, 12);
-  const cur = Object.fromEntries(MEMBERS.map((m) => {
-    const s = SUM[m.key];
-    return [m.key, { total: s.total, ...Object.fromEntries(PHASES.map((p) => [p, s.phases[p].length])) }];
-  }));
-  const rows = keys.includes(thisWeek.key) || rawInfo.isSample ? keys : [thisWeek.key, ...keys];
+  const rows = keys.includes(thisWeek.key) || dataState.source === "sample" ? keys : [thisWeek.key, ...keys];
+  const cur = currentSnap();
   const cell = (v) => v ? `<b>${v.total}</b>件<span style="color:var(--muted)"> | ${PHASES.map((p) => `${PHASE_LABEL[p]}:${v[p]}`).join(" ")}</span>` : "—";
   $("snapTable").innerHTML = `
     <thead><tr><th>週</th>${MEMBERS.map((m) => `<th><span class="dot" style="display:inline-block;background:${memberColor(m)};margin-right:5px"></span>${esc(m.key)}</th>`).join("")}</tr></thead>
@@ -678,7 +742,7 @@ function renderSnaps() {
       <tr>
         <td>${esc(k)}${k === thisWeek.key ? '<span style="color:var(--muted)">(今週)</span>' : ""}</td>
         ${MEMBERS.map((m) => `<td>${cell(k === thisWeek.key ? cur[m.key] : snaps[k]?.[m.key])}</td>`).join("")}
-      </tr>`).join("") || `<tr><td colspan="4" style="color:var(--muted)">まだスナップショットがありません(実データ取込後、週をまたいで開くと蓄積されます)</td></tr>`}
+      </tr>`).join("") || `<tr><td colspan="4" style="color:var(--muted)">まだスナップショットがありません(週をまたいで開くと蓄積されます)</td></tr>`}
     </tbody>`;
 }
 
@@ -715,16 +779,26 @@ function renderTiers() {
     comp.set(d.account, (comp.get(d.account) || 0) + 1);
   }
   const tiers = [...byTier.keys()].sort((a, b) => a.localeCompare(b, "ja"));
+  const SHOW = 30;
   $("tierGroups").innerHTML = tiers.map((t) => {
     const comps = [...byTier.get(t).entries()].sort((a, b) => b[1] - a[1]);
     const total = comps.reduce((s, [, n]) => s + n, 0);
+    const chip = ([c, n], hid) => `<button class="comp-chip" data-acc="${esc(c)}" ${hid ? "hidden data-more" : ""}>${esc(c)} <b>${n}</b></button>`;
     return `<div class="tier-row">
       <div class="tier-name">${esc(t)}<small>${comps.length}社 / ${total}案件</small></div>
-      ${comps.map(([c, n]) => `<button class="comp-chip" data-acc="${esc(c)}">${esc(c)} <b>${n}</b></button>`).join("")}
+      ${comps.slice(0, SHOW).map((e) => chip(e, false)).join("")}
+      ${comps.slice(SHOW).map((e) => chip(e, true)).join("")}
+      ${comps.length > SHOW ? `<button class="comp-chip" data-expand style="color:var(--muted)">+ 他${comps.length - SHOW}社を表示</button>` : ""}
     </div>`;
   }).join("") || `<div class="tier-row"><span class="hint">データがありません</span></div>`;
-  $("tierGroups").querySelectorAll(".comp-chip").forEach((el) => {
+  $("tierGroups").querySelectorAll(".comp-chip[data-acc]").forEach((el) => {
     el.addEventListener("click", () => openList(`${el.dataset.acc} の案件`, filterDeals({ account: el.dataset.acc })));
+  });
+  $("tierGroups").querySelectorAll("[data-expand]").forEach((el) => {
+    el.addEventListener("click", () => {
+      el.closest(".tier-row").querySelectorAll("[data-more]").forEach((c) => { c.hidden = false; });
+      el.remove();
+    });
   });
 }
 
@@ -737,25 +811,31 @@ function sfUrl(id) {
 function openList(title, deals) {
   $("listTitle").textContent = title;
   $("listCount").textContent = `${deals.length}件`;
-  const sorted = [...deals].sort((a, b) => (b.created?.getTime() || 0) - (a.created?.getTime() || 0));
+  const sorted = [...deals].sort((a, b) => (b.apoDate?.getTime() || 0) - (a.apoDate?.getTime() || 0));
   $("listTable").innerHTML = `
-    <thead><tr><th>案件名</th><th>取引先</th><th>Tier</th><th>フェーズ</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>作成日</th></tr></thead>
+    <thead><tr><th>案件名</th><th>取引先</th><th>Tier</th><th>フェーズ</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>アポ日</th><th>DEAD理由</th></tr></thead>
     <tbody>${sorted.map((d) => {
       const url = sfUrl(d.id);
       const nameCell = url
         ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Salesforceで開く">${esc(d.name)} ↗</a>`
         : esc(d.name);
+      const kubun =
+        (d.isNewLead ? '<span class="badge new">新規</span>' : "") +
+        (d.isAkapura ? '<span class="badge">アカプラ</span>' : "") +
+        (d.isKeizoku ? '<span class="badge">継続</span>' : "") +
+        (d.sisaku ? `<span class="badge">${esc(d.sisaku)}</span>` : "");
       return `<tr>
-        <td style="white-space:normal;min-width:260px">${nameCell}</td>
+        <td style="white-space:normal;min-width:260px">${nameCell}${d.isFocusDeal ? ' <span title="注力案件">⭐</span>' : ""}</td>
         <td>${esc(d.account)}</td>
         <td>${esc(d.tier)}</td>
         <td><span class="dot" style="display:inline-block;background:var(${PHASE_CVAR[d.phase]});margin-right:5px"></span>${esc(d.phaseRaw || PHASE_LABEL[d.phase])}</td>
         <td>${esc(d.owner)}</td>
         <td>${esc(d.member.key)}</td>
-        <td>${d.isNewLead ? '<span class="badge new">新規</span>' : ""}${d.isAkapura ? '<span class="badge">アカプラ</span>' : ""}${d.dtype && !d.isAkapura ? `<span class="badge">${esc(d.dtype)}</span>` : ""}</td>
-        <td>${d.created ? `${d.created.getFullYear()}/${fmtMD(d.created)}` : "—"}</td>
+        <td>${kubun}</td>
+        <td>${d.apoDate ? fmtYMD(d.apoDate) : "—"}</td>
+        <td>${esc(d.deadReason || "")}</td>
       </tr>`;
-    }).join("") || `<tr><td colspan="8" style="color:var(--muted)">該当する案件がありません</td></tr>`}
+    }).join("") || `<tr><td colspan="9" style="color:var(--muted)">該当する案件がありません</td></tr>`}
     </tbody>`;
   $("sfHint").textContent = settings.sfBase
     ? "案件名クリックで Salesforce が開きます。"
@@ -785,12 +865,17 @@ $("btnSaveSettings").addEventListener("click", () => {
   $("targetInputs").querySelectorAll("input[data-target]").forEach((el) => {
     settings.targets[el.dataset.target] = Number(el.value) || DEFAULT_TARGET;
   });
-  localStorage.setItem(LS.settings, JSON.stringify(settings));
+  saveSettings();
   closeOverlay("settingsOverlay");
-  refresh();
+  rebuild();
+});
+$("chkKeizoku").addEventListener("change", (e) => {
+  settings.includeKeizoku = e.target.checked;
+  saveSettings();
+  rebuild();
 });
 
-/* ---------- CSV取込 ---------- */
+/* ---------- CSV取込(予備) ---------- */
 $("btnImport").addEventListener("click", () => { $("importMsg").textContent = ""; $("importOverlay").classList.add("open"); });
 async function doImport() {
   try {
@@ -799,24 +884,24 @@ async function doImport() {
     if (f) text = await f.text();
     else text = $("inPaste").value;
     if (!text.trim()) { $("importMsg").textContent = "ファイルを選択するか、データを貼り付けてください。"; return; }
-    const rows = rowsFromDelimited(text);
+    const rows = objectsFromDelimited(text);
     const now = new Date();
-    const payload = { rows, isSample: false, updatedAt: `${now.getFullYear()}/${fmtMD(now)}` };
-    const check = buildDeals(payload);
+    const payload = { rows, savedAt: fmtYMD(now) };
+    const check = buildDeals(rows, {});
     if (!check.length) { $("importMsg").textContent = "⚠ 対象メンバー(林我玖・奈良・松村佳保)がアポ取得者の案件が0件でした。列名と値を確認してください。"; return; }
-    localStorage.setItem(LS.data, JSON.stringify(payload));
+    localStorage.setItem(LS.manual, JSON.stringify(payload));
     closeOverlay("importOverlay");
     $("inFile").value = ""; $("inPaste").value = "";
-    refresh();
+    init(false);
   } catch (e) {
     $("importMsg").textContent = "⚠ 取込エラー: " + e.message;
   }
 }
 $("btnDoImport").addEventListener("click", doImport);
 $("btnClearImport").addEventListener("click", () => {
-  localStorage.removeItem(LS.data);
+  localStorage.removeItem(LS.manual);
   closeOverlay("importOverlay");
-  refresh();
+  init(false);
 });
 
 /* ---------- テーマ ---------- */
@@ -833,10 +918,10 @@ $("btnTheme").addEventListener("click", () => {
 });
 
 /* ---------- メイン ---------- */
-function refresh() {
-  settings = loadSettings();
-  rawInfo = loadRawData();
-  DEALS = buildDeals(rawInfo);
+let RAW_ROWS = [];
+let TIER_MAP = {};
+
+function renderAll() {
   SUM = summarize(DEALS);
   renderHeader();
   renderKpis();
@@ -847,8 +932,72 @@ function refresh() {
   renderOwners();
   renderTiers();
 }
+function rebuild() {
+  settings = loadSettings();
+  DEALS = buildDeals(RAW_ROWS, TIER_MAP);
+  renderAll();
+}
+function useFallback(errMsg) {
+  dataState.error = errMsg || "";
+  try {
+    const cached = JSON.parse(localStorage.getItem(LS.cache) || "null");
+    if (cached?.rows?.length) {
+      RAW_ROWS = cached.rows; TIER_MAP = cached.tierMap || {};
+      dataState.source = "cache"; dataState.fetchedAt = cached.fetchedAt || "";
+      return;
+    }
+  } catch { /* キャッシュ破損時は次へ */ }
+  try {
+    const manual = JSON.parse(localStorage.getItem(LS.manual) || "null");
+    if (manual?.rows?.length) {
+      RAW_ROWS = manual.rows; TIER_MAP = {};
+      dataState.source = "manual"; dataState.fetchedAt = manual.savedAt || "";
+      return;
+    }
+  } catch { /* 手動データ破損時は次へ */ }
+  RAW_ROWS = (window.DEALS_DATA?.rows) || []; TIER_MAP = {};
+  dataState.source = "sample"; dataState.fetchedAt = "";
+}
+
+async function init(fetchLive = true) {
+  const btn = $("btnReload");
+  // まず手元にあるもので即描画
+  useFallback("");
+  dataState.error = "";
+  rebuild();
+  if (!fetchLive) return;
+  btn.disabled = true; btn.textContent = "↻ 取得中…";
+  try {
+    const rows = await fetchGvizRows(SHEET_NAME);
+    let tierMap = {};
+    try { tierMap = buildTierMap(await fetchGvizRows(TIER_SHEET)); }
+    catch { /* tierタブが無ければ無視 */ }
+    // キャッシュにはページで使う列だけ保存(容量節約)
+    const slim = rows.map((r) => {
+      const o = {};
+      for (const keys of Object.values(COLS)) {
+        for (const k of keys) if (r[k] != null && r[k] !== "") { o[k] = r[k]; break; }
+      }
+      return o;
+    });
+    const now = new Date();
+    const fetchedAt = `${fmtYMD(now)} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    try { localStorage.setItem(LS.cache, JSON.stringify({ rows: slim, tierMap, fetchedAt })); }
+    catch { /* 容量超過時はキャッシュなしで続行 */ }
+    RAW_ROWS = slim; TIER_MAP = tierMap;
+    dataState = { source: "live", fetchedAt, error: "" };
+    rebuild();
+  } catch (e) {
+    useFallback(e.message);
+    rebuild();
+  } finally {
+    btn.disabled = false; btn.textContent = "↻ 最新データに更新";
+  }
+}
+$("btnReload").addEventListener("click", () => init(true));
+
 applyTheme();
-refresh();
+init(true);
 </script>
 </body>
 </html>
