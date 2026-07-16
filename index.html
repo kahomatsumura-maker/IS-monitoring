@@ -439,11 +439,11 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 
 /* ================= 設定 ================= */
 const MEMBERS = [
-  { key: "林我玖",   role: "IS",   cvar: "--m1", focus: "P3",
+  { key: "林我玖",   role: "IS",   cvar: "--m1", focus: "P3", target: 30,
     focusNote: "P3を注力モニタリング(アカプラは01商談でも可)" },
-  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1",
+  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1", target: 20,
     focusNote: "P1を注力モニタリング" },
-  { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, focusNote: "" },
+  { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, target: 10, focusNote: "" },
 ];
 const PHASES = ["P1","P2","P3","P4","P5","P6","P7","P8","DEAD"];
 const LIVE_PHASES = ["P1","P2","P3","P4","P5","P6","P7"];
@@ -592,7 +592,7 @@ function loadSettings() {
 }
 let settings = loadSettings();
 const saveSettings = () => localStorage.setItem(LS.settings, JSON.stringify(settings));
-const targetOf = (m) => Number(settings.targets[m.key]) > 0 ? Number(settings.targets[m.key]) : DEFAULT_TARGET;
+const targetOf = (m) => Number(settings.targets[m.key]) > 0 ? Number(settings.targets[m.key]) : (m.target || DEFAULT_TARGET);
 
 /* ================= 期間フィルタ ================= */
 const today = new Date();
@@ -1109,7 +1109,7 @@ $("btnSettings").addEventListener("click", () => {
 $("btnSaveSettings").addEventListener("click", () => {
   settings.sfBase = $("inSfBase").value.trim();
   $("targetInputs").querySelectorAll("input[data-target]").forEach((el) => {
-    settings.targets[el.dataset.target] = Number(el.value) || DEFAULT_TARGET;
+    settings.targets[el.dataset.target] = Number(el.value) || 0; // 0/空欄はメンバー既定値に戻す
   });
   saveSettings();
   closeOverlay("settingsOverlay");
