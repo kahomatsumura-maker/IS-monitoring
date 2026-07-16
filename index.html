@@ -268,7 +268,7 @@
   </section>
 
   <section>
-    <h2>Tier別 企業<span class="h-note">スプレッドシートに「tier」タブ(取引先名 / Tier の2列)を作ると自動反映されます</span></h2>
+    <h2>Tier別 企業<span class="h-note">all_leadタブの備考列から自動判定(「tier」タブを作れば上書きも可)</span></h2>
     <div class="tier-groups" id="tierGroups"></div>
   </section>
 </div>
@@ -334,7 +334,9 @@
 /* ================= データソース(Google スプレッドシート) ================= */
 const SHEET_ID = "1_TJRjTq8PRg0FTs36CbB5I45EKrccVEkpqWw2UO7Stc";
 const SHEET_NAME = "all_cases";   // 案件データのタブ
-const TIER_SHEET = "tier";        // 任意: 取引先名/Tier の2列タブがあれば読む
+const LEAD_SHEET = "all_lead";    // Tier判定元(備考列にTier1〜4が入っている)
+const LEAD_TQ = "select B,Q";     // B=備考, Q=取引先名 だけ取得(11,000行超のため)
+const TIER_SHEET = "tier";        // 任意: 取引先名/Tier の2列タブがあれば上書きに使う
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 
 /* ================= 設定 ================= */
@@ -404,8 +406,9 @@ function parsePhase(raw) {
 }
 
 /* ---------- gviz(スプレッドシート)読み込み ---------- */
-async function fetchGvizRows(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetName)}`;
+async function fetchGvizRows(sheetName, tq) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(sheetName)}`
+    + (tq ? `&tq=${encodeURIComponent(tq)}` : "");
   const res = await fetch(url, { credentials: "omit" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
@@ -543,6 +546,20 @@ function buildTierMap(rows) {
     if (!accKey || !tierKey) continue;
     const acc = norm(r[accKey]); const t = String(r[tierKey] ?? "").trim();
     if (acc && t) map[acc] = t;
+  }
+  return map;
+}
+// all_leadの備考列("Tier1" "Tier2クロスセル対象企業" 等)からTierを抽出
+function buildTierMapFromLead(rows) {
+  const map = {};
+  for (const r of rows || []) {
+    const keys = Object.keys(r);
+    const bikoKey = keys.find((k) => /備考/.test(k)) || keys[0];
+    const accKey = keys.find((k) => /取引先名/.test(k)) || keys[1];
+    if (!bikoKey || !accKey) continue;
+    const acc = norm(r[accKey]);
+    const m = String(r[bikoKey] ?? "").match(/tier\s*([1-9])/i);
+    if (acc && m && !map[acc]) map[acc] = `Tier${m[1]}`;
   }
   return map;
 }
@@ -970,8 +987,10 @@ async function init(fetchLive = true) {
   try {
     const rows = await fetchGvizRows(SHEET_NAME);
     let tierMap = {};
-    try { tierMap = buildTierMap(await fetchGvizRows(TIER_SHEET)); }
-    catch { /* tierタブが無ければ無視 */ }
+    try { tierMap = buildTierMapFromLead(await fetchGvizRows(LEAD_SHEET, LEAD_TQ)); }
+    catch { /* all_leadが読めなければTierなしで続行 */ }
+    try { Object.assign(tierMap, buildTierMap(await fetchGvizRows(TIER_SHEET))); }
+    catch { /* 任意のtierタブが無ければ無視 */ }
     // キャッシュにはページで使う列だけ保存(容量節約)
     const slim = rows.map((r) => {
       const o = {};
