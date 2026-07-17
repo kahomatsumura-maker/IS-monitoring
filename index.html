@@ -465,6 +465,12 @@ const PHASE_FULL = {
 };
 const PHASE_CVAR = { P1:"--p1",P2:"--p2",P3:"--p3",P4:"--p4",P5:"--p5",P6:"--p6",P7:"--p7",P8:"--p8",DEAD:"--dead" };
 const TIER_ORDER = ["Tier1","Tier2","Tier3","Tier4","Tier5","Tier6","Tier7","Tier8","Tier9","Tier未設定"];
+// 新規リード/アカプラ(既顧客)の集計対象企業(「株式会社」を除いた完全一致)
+const TARGET_ACCOUNTS = [
+  "三菱電機", "サントリーホールディングス", "サントリー", "サントリープロダクツ",
+  "サントリー食品インターナショナル", "日本電気", "ウーブン・バイ・トヨタ",
+  "野村不動産ホールディングス", "野村不動産",
+];
 const TIER_CVAR = { Tier1:"--t1", Tier2:"--t2", Tier3:"--t3", Tier4:"--t4", "Tier未設定":"--t0" };
 const DEFAULT_TARGET = 10;
 
@@ -476,6 +482,8 @@ const LS = {
 /* ================= ユーティリティ ================= */
 const $ = (id) => document.getElementById(id);
 const norm = (s) => String(s ?? "").replace(/[\s　]/g, "");
+const stripCorp = (s) => norm(s).replace(/株式会社|\(株\)|（株）/g, "");
+const TARGET_SET = new Set(TARGET_ACCOUNTS.map(stripCorp));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
 function parseDateStr(s) {
@@ -547,6 +555,7 @@ const COLS = {
   phase:   ["フェーズ"],
   apoDate: ["初回アポイント日","作成日"],
   id:      ["案件ID","案件 ID","商談ID"],
+  contact: ["顧客担当者氏名","顧客担当者"],
   shinki:  ["新規/継続","新規／継続","新規継続"],
   sisaku:  ["施策区分_2","施策区分"],
   deadReason: ["DEAD理由"],
@@ -655,7 +664,24 @@ function inPeriod(d) {
 }
 
 /* ================= 案件の正規化 ================= */
+// リード(取引先×顧客担当者)ごとのユニーク案件数(全行ベース・継続含む)
+function computeLeadCounts(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    const acc = norm(pick(r, COLS.account));
+    const person = norm(pick(r, COLS.contact));
+    if (!acc || !person) continue;
+    const cid = String(pick(r, COLS.id)).trim() || norm(pick(r, COLS.name));
+    if (!cid) continue;
+    const key = acc + "|" + person;
+    if (!map.has(key)) map.set(key, new Set());
+    map.get(key).add(cid);
+  }
+  return map;
+}
+
 function buildDeals(rows, tierMap) {
+  const leadCounts = computeLeadCounts(rows);
   const memberOf = (apoName) => {
     const n = norm(apoName);
     if (!n) return null;
@@ -672,22 +698,26 @@ function buildDeals(rows, tierMap) {
     const key = id || norm(name);
     if (seen.has(key)) continue; // 重複行を除外
     const shinki = String(pick(r, COLS.shinki)).trim();
-    const leadRaw = String(pick(r, COLS.lead)).trim();
-    const dtype = String(pick(r, COLS.dtype)).trim();
     const account = String(pick(r, COLS.account)).trim() || "(不明)";
+    const contact = String(pick(r, COLS.contact)).trim();
     const isKeizoku = /継続|再計上/.test(shinki);
+    // 対象企業(「株式会社」を除いた完全一致)のリードだけを新規/アカプラの集計対象にする
+    const isTarget = TARGET_SET.has(stripCorp(account));
+    const leadCaseCount = (leadCounts.get(norm(account) + "|" + norm(contact)) || new Set()).size;
     seen.set(key, {
       member, phase,
       phaseRaw: String(pick(r, COLS.phase)).trim(),
       owner: String(pick(r, COLS.owner)).trim() || "(未設定)",
-      account, name,
+      account, name, contact,
       apoDate: parseDateStr(pick(r, COLS.apoDate)),
       id,
       tier: tierMap[norm(account)] || String(pick(r, COLS.tier)).trim() || "Tier未設定",
       shinki,
       isKeizoku,
-      isNewLead: shinki === "新規案件" || (!shinki && /新規/.test(leadRaw)),
-      isAkapura: shinki === "既顧客新規案件" || /アカプラ/.test(dtype) || (!shinki && /既存/.test(leadRaw)),
+      isTarget,
+      leadCaseCount,
+      isNewLead: isTarget && leadCaseCount === 1, // 新規リード=案件が1件しかないリードの案件
+      isAkapura: isTarget && shinki === "既顧客新規案件",
       sisaku: String(pick(r, COLS.sisaku)).trim(),
       deadReason: String(pick(r, COLS.deadReason)).trim(),
       caseType: String(pick(r, COLS.caseType)).trim(),
@@ -740,6 +770,7 @@ function summarize(deals) {
       week: list.filter((d) => d.apoDate && isoWeek(d.apoDate).key === thisWeek.key),
       newLead: list.filter((d) => d.isNewLead),
       akapura: list.filter((d) => d.isAkapura),
+      target: list.filter((d) => d.isTarget),
     };
   }
   return byMember;
@@ -841,6 +872,9 @@ function filterDeals(f, source) {
     if (f.owner && d.owner !== f.owner) return false;
     if (f.account && d.account !== f.account) return false;
     if (f.tier && d.tier !== f.tier) return false;
+    if (f.target && !d.isTarget) return false;
+    if (f.newLead && !d.isNewLead) return false;
+    if (f.akapura && !d.isAkapura) return false;
     return true;
   });
 }
@@ -898,8 +932,10 @@ function renderMembers() {
         <div class="pgroup">${LIVE_PHASES.map(chip).join("")}</div>
         <div class="pgroup done">${chip("P8")}${chip("DEAD")}</div>
       </div>
-      ${m.focus ? `<div class="lead-line">★${m.focus}内訳: <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
-      <div class="lead-line">期間内全体: 新規リード <b>${s.newLead.length}</b>件 / アカプラ(既顧客) <b>${s.akapura.length}</b>件</div>
+      ${m.focus ? `<div class="lead-line">★${m.focus}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
+      <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
+        <span class="badge new">新規リード</span><b data-f="newLead" style="cursor:pointer">${s.newLead.length}</b>件 /
+        <span class="badge">アカプラ(既顧客)</span><b data-f="akapura" style="cursor:pointer">${s.akapura.length}</b>件</div>
     </div>`;
   }).join("");
 
@@ -913,6 +949,11 @@ function renderMembers() {
     };
     card.querySelectorAll("[data-act]").forEach((el) =>
       el.addEventListener("click", acts[el.dataset.act]));
+    const leadTitles = { target: "対象企業の案件", newLead: "新規リード案件(対象企業・案件1件のみのリード)", akapura: "アカプラ案件(対象企業・既顧客新規)" };
+    card.querySelectorAll("[data-f]").forEach((el) => {
+      el.addEventListener("click", () =>
+        openList(`${mkey} の${leadTitles[el.dataset.f]}`, filterDeals({ member: mkey, [el.dataset.f]: true })));
+    });
     card.querySelectorAll(".ph").forEach((el) => {
       el.addEventListener("click", () =>
         openList(`${mkey} × ${PHASE_FULL[el.dataset.ph]}`, filterDeals({ member: mkey, phase: el.dataset.ph })));
@@ -1068,20 +1109,21 @@ function openList(title, deals) {
   $("listCount").textContent = `${deals.length}件`;
   const sorted = [...deals].sort((a, b) => (b.apoDate?.getTime() || 0) - (a.apoDate?.getTime() || 0));
   $("listTable").innerHTML = `
-    <thead><tr><th>案件名</th><th>取引先</th><th>Tier</th><th>フェーズ</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>アポ日</th><th>DEAD理由</th></tr></thead>
+    <thead><tr><th>案件名</th><th>取引先</th><th>リード(顧客担当者)</th><th>Tier</th><th>フェーズ</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>アポ日</th><th>DEAD理由</th></tr></thead>
     <tbody>${sorted.map((d) => {
       const url = sfUrl(d.id);
       const nameCell = url
         ? `<a href="${esc(url)}" target="_blank" rel="noopener" title="Salesforceで開く">${esc(d.name)} ↗</a>`
         : esc(d.name);
       const kubun =
-        (d.isNewLead ? '<span class="badge new">新規</span>' : "") +
-        (d.isAkapura ? '<span class="badge">アカプラ</span>' : "") +
+        (d.isNewLead ? '<span class="badge new" title="対象企業・案件1件のみのリード">新規</span>' : "") +
+        (d.isAkapura ? '<span class="badge" title="対象企業・既顧客新規案件">アカプラ</span>' : "") +
         (d.isKeizoku ? '<span class="badge">継続</span>' : "") +
         (d.sisaku ? `<span class="badge">${esc(d.sisaku)}</span>` : "");
       return `<tr>
         <td style="white-space:normal;min-width:260px">${nameCell}${d.isFocusDeal ? ' <span title="注力案件">⭐</span>' : ""}</td>
         <td>${esc(d.account)}</td>
+        <td>${esc(d.contact || "—")}${d.contact && d.leadCaseCount ? `<span style="color:var(--muted)">(案件${d.leadCaseCount}件)</span>` : ""}</td>
         <td>${esc(d.tier)}</td>
         <td><span class="dot" style="display:inline-block;background:var(${PHASE_CVAR[d.phase]});margin-right:5px"></span>${esc(d.phaseRaw || PHASE_LABEL[d.phase])}</td>
         <td>${esc(d.owner)}</td>
@@ -1090,7 +1132,7 @@ function openList(title, deals) {
         <td>${d.apoDate ? fmtYMD(d.apoDate) : "—"}</td>
         <td>${esc(d.deadReason || "")}</td>
       </tr>`;
-    }).join("") || `<tr><td colspan="9" style="color:var(--muted)">該当する案件がありません</td></tr>`}
+    }).join("") || `<tr><td colspan="10" style="color:var(--muted)">該当する案件がありません</td></tr>`}
     </tbody>`;
   $("sfHint").textContent = settings.sfBase
     ? "案件名クリックで Salesforce が開きます。"
