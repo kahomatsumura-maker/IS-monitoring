@@ -448,12 +448,14 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 
 /* ================= 設定 ================= */
 const MEMBERS = [
-  { key: "林我玖",   role: "IS",   cvar: "--m1", focus: "P3", target: 35,
-    focusNote: "P3を注力モニタリング(アカプラは01商談でも可)" },
-  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1", target: 25,
+  { key: "林我玖",   role: "IS",   cvar: "--m1", focus: ["P1", "P4"], target: 35,
+    focusNote: "P1・P4を注力モニタリング" },
+  { key: "奈良",     role: "IS",   cvar: "--m2", focus: ["P1"], target: 25,
     focusNote: "P1を注力モニタリング" },
-  { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, target: 10, focusNote: "" },
+  { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: ["P1"], target: 10,
+    focusNote: "P1を注力モニタリング" },
 ];
+const TEAM_FOCUS = ["P1", "P4"]; // IS全体カードの注力フェーズ
 const PHASES = ["P1","P2","P3","P4","P5","P6","P7","P8","DEAD"];
 const LIVE_PHASES = ["P1","P2","P3","P4","P5","P6","P7"];
 const PHASE_LABEL = { P1:"P1", P2:"P2", P3:"P3", P4:"P4", P5:"P5", P6:"P6", P7:"P7", P8:"受注", DEAD:"Dead" };
@@ -553,6 +555,7 @@ const COLS = {
   account: ["取引先名","取引先"],
   name:    ["案件名","商談名"],
   phase:   ["フェーズ"],
+  reached: ["最終到達フェーズ"],
   apoDate: ["初回アポイント日","作成日"],
   id:      ["案件ID","案件 ID","商談ID"],
   contact: ["顧客担当者氏名","顧客担当者"],
@@ -691,7 +694,11 @@ function buildDeals(rows, tierMap) {
   for (const r of rows) {
     const member = memberOf(pick(r, COLS.apo));
     if (!member) continue;
-    const phase = parsePhase(pick(r, COLS.phase));
+    // Dead判定は「フェーズ」列、P1〜P8の分類は「最終到達フェーズ」ではかる
+    const curRaw = String(pick(r, COLS.phase)).trim();
+    const reachedRaw = String(pick(r, COLS.reached)).trim();
+    const isDead = /^dead/i.test(curRaw);
+    const phase = isDead ? "DEAD" : (parsePhase(reachedRaw) || parsePhase(curRaw));
     if (!phase) continue;
     const id = String(pick(r, COLS.id)).trim();
     const name = String(pick(r, COLS.name)).trim();
@@ -706,7 +713,7 @@ function buildDeals(rows, tierMap) {
     const leadCaseCount = (leadCounts.get(norm(account) + "|" + norm(contact)) || new Set()).size;
     seen.set(key, {
       member, phase,
-      phaseRaw: String(pick(r, COLS.phase)).trim(),
+      phaseRaw: isDead ? curRaw : (reachedRaw || curRaw),
       owner: String(pick(r, COLS.owner)).trim() || "(未設定)",
       account, name, contact,
       apoDate: parseDateStr(pick(r, COLS.apoDate)),
@@ -895,7 +902,8 @@ function renderMembers() {
   const TEAM_COLOR = "#9b8fe0";
   const entries = [
     { key: "__team", label: "IS全体", roleLabel: `IS合算(${isKeys.join("+")})`, color: TEAM_COLOR,
-      focus: null, focusNote: "", s: teamSum(SUM), sAll: teamSum(SUM_ALL),
+      focus: TEAM_FOCUS, focusNote: `${TEAM_FOCUS.map((p) => PHASE_LABEL[p]).join("・")}を注力モニタリング`,
+      s: teamSum(SUM), sAll: teamSum(SUM_ALL),
       target: isMembers.reduce((a, m) => a + targetOf(m), 0), filterBase: { members: isKeys } },
     ...MEMBERS.map((m) => ({
       key: m.key, label: m.key, roleLabel: m.role, color: memberColor(m),
@@ -906,11 +914,13 @@ function renderMembers() {
     const { s, sAll } = e;
     const pctReal = Math.round((sAll.month.length / e.target) * 100);
     const won = s.phases.P8.length, dead = s.phases.DEAD.length;
-    const fNew = e.focus ? s.phases[e.focus].filter((d) => d.isNewLead).length : 0;
-    const fAka = e.focus ? s.phases[e.focus].filter((d) => d.isAkapura).length : 0;
+    const focus = e.focus || [];
+    const focusDeals = focus.flatMap((p) => s.phases[p]);
+    const fNew = focusDeals.filter((d) => d.isNewLead).length;
+    const fAka = focusDeals.filter((d) => d.isAkapura).length;
     const chip = (p) => {
       const n = s.phases[p].length;
-      const isFocus = e.focus === p;
+      const isFocus = focus.includes(p);
       const pct = s.total ? Math.round((n / s.total) * 100) : 0;
       return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" title="${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
         ${isFocus ? '<span class="star">★</span>' : ""}
@@ -946,12 +956,12 @@ function renderMembers() {
         </div>
         <div class="meter"><i style="width:${Math.min(100, pctReal)}%;background:${e.color}"></i></div>
       </div>
-      <div class="pg-label">獲得したアポの現在フェーズ(進行中 → 受注/Dead)</div>
+      <div class="pg-label">獲得したアポの最終到達フェーズ(進行中 → 受注/Dead)</div>
       <div class="phase-flex">
         <div class="pgroup">${LIVE_PHASES.map(chip).join("")}</div>
         <div class="pgroup done">${chip("P8")}${chip("DEAD")}</div>
       </div>
-      ${e.focus ? `<div class="lead-line">★${e.focus}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
+      ${focus.length ? `<div class="lead-line">★${focus.map((p) => PHASE_LABEL[p]).join("・")}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
       <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
         <span class="badge new">新規リード</span><b data-f="newLead" style="cursor:pointer">${s.newLead.length}</b>件 /
         <span class="badge">アカプラ(既顧客)</span><b data-f="akapura" style="cursor:pointer">${s.akapura.length}</b>件</div>
