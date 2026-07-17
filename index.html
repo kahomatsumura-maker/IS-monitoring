@@ -7,35 +7,38 @@
 <style>
   :root {
     color-scheme: light;
-    --page: #eef4fd;            /* 淡いブルーの背景 */
+    --page: #f5f7fc;            /* 淡いブルーの背景 */
     --surface: #ffffff;
-    --ink: #1e293b;
-    --ink-2: #475569;
-    --muted: #94a3b8;
-    --grid: #e2e8f0;
-    --baseline: #cbd5e1;
-    --border: #dbe4f2;
-    --shadow: 0 1px 3px rgba(37, 99, 235, 0.07);
-    --good: #16a34a;
-    --blue: #2563eb;
-    --amber: #d97706;
-    --pink: #ec4899;
-    --pink-soft: #fdf2f8;       /* 淡いピンク */
-    --pink-line: #f9a8d4;
-    --blue-tint: #eff6ff;
-    --green-tint: #f0fdf4;
-    --slate-tint: #f8fafc;
-    /* メンバー色 */
-    --m1: #2563eb;  /* 林我玖 */
-    --m2: #16a34a;  /* 奈良 */
-    --m3: #ec4899;  /* 松村佳保 */
-    /* フェーズ(青・淡→濃、受注=緑) */
-    --p1: #93c5fd; --p2: #60a5fa; --p3: #3b82f6; --p4: #2563eb;
-    --p5: #1d4ed8; --p6: #1e40af; --p7: #1e3a8a; --p8: #16a34a;
-    --dead: #94a3b8;
-    /* Tier(参考ページに合わせる: T1青 T2緑 T3オレンジ T4グレー) */
-    --t1: #2563eb; --t2: #16a34a; --t3: #d97706; --t4: #64748b; --t0: #cbd5e1;
-    --focus-ring: #ec4899;
+    --ink: #3b4963;
+    --ink-2: #64748b;
+    --muted: #9aa5b5;
+    --grid: #e9edf5;
+    --baseline: #d3dae6;
+    --border: #e5eaf4;
+    --shadow: 0 1px 3px rgba(100, 130, 200, 0.10);
+    --good: #3e8f68;
+    --blue: #4f7bd0;
+    --amber: #c98a44;
+    --pink: #d76da4;
+    --pink-soft: #fdf1f7;       /* 淡いピンク */
+    --pink-line: #f3bcd7;
+    --blue-tint: #eef4fd;
+    --green-tint: #edf7f1;
+    --slate-tint: #f6f8fb;
+    /* KPIカードなどの淡い縁取り */
+    --soft-blue: #b3cdf5; --soft-green: #b5dcc7; --soft-amber: #f0d3ab;
+    --soft-pink: #f3bcd7; --soft-gray: #dde3ec;
+    /* メンバー色(淡め) */
+    --m1: #5f8fe8;  /* 林我玖 */
+    --m2: #4aa87a;  /* 奈良 */
+    --m3: #e884b2;  /* 松村佳保 */
+    /* フェーズ(淡い青→濃、受注=緑) */
+    --p1: #b3cdf5; --p2: #9cbdf2; --p3: #84acee; --p4: #6d9bea;
+    --p5: #5f8fe8; --p6: #4d7cd6; --p7: #3f68bd; --p8: #4aa87a;
+    --dead: #a5b1c2;
+    /* Tier(T1青 T2緑 T3オレンジ T4グレー・淡め) */
+    --t1: #5f8fe8; --t2: #4aa87a; --t3: #e2a45a; --t4: #a5b1c2; --t0: #e2e8f1;
+    --focus-ring: #e884b2;
     --mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
@@ -63,6 +66,9 @@
       --p1: #1e40af; --p2: #1d4ed8; --p3: #2563eb; --p4: #3b82f6;
       --p5: #60a5fa; --p6: #93c5fd; --p7: #bfdbfe; --p8: #22c55e;
       --t1: #3b82f6; --t2: #22c55e; --t3: #f59e0b; --t4: #94a3b8; --t0: #475569;
+      --soft-blue: rgba(59,130,246,0.5); --soft-green: rgba(34,197,94,0.5);
+      --soft-amber: rgba(245,158,11,0.5); --soft-pink: rgba(236,72,153,0.5);
+      --soft-gray: rgba(148,163,184,0.4);
       --focus-ring: #f472b6;
     }
   }
@@ -90,6 +96,9 @@
     --p1: #1e40af; --p2: #1d4ed8; --p3: #2563eb; --p4: #3b82f6;
     --p5: #60a5fa; --p6: #93c5fd; --p7: #bfdbfe; --p8: #22c55e;
     --t1: #3b82f6; --t2: #22c55e; --t3: #f59e0b; --t4: #94a3b8; --t0: #475569;
+    --soft-blue: rgba(59,130,246,0.5); --soft-green: rgba(34,197,94,0.5);
+    --soft-amber: rgba(245,158,11,0.5); --soft-pink: rgba(236,72,153,0.5);
+    --soft-gray: rgba(148,163,184,0.4);
     --focus-ring: #f472b6;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -156,7 +165,7 @@
     padding: 12px 16px 10px; cursor: pointer; text-align: center;
     border: 2px solid var(--border); box-shadow: var(--shadow);
   }
-  .kpi[data-accent] { border-color: var(--accent); }
+  .kpi[data-accent] { border-color: var(--accent-soft, var(--accent)); }
   .kpi:hover { filter: brightness(0.985); }
   .kpi .k-label { font-size: 11px; font-weight: 700; color: var(--accent, var(--ink-2)); letter-spacing: .04em; }
   .kpi .k-value { font-size: 32px; font-weight: 700; line-height: 1.25; font-family: var(--mono); }
@@ -801,15 +810,15 @@ function renderKpis() {
   const active = all.filter((d) => LIVE_PHASES.includes(d.phase));
   const monthAll = DEALS_ALL.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth);
   const kpis = [
-    { label: `獲得アポ(${periodLabel()}・3名計)`, value: all.length, sub: "クリックで一覧", filter: {}, accent: "var(--blue)" },
+    { label: `獲得アポ(${periodLabel()}・3名計)`, value: all.length, sub: "クリックで一覧", filter: {}, accent: "var(--blue)", soft: "var(--soft-blue)" },
     { label: "今月の新規アポ(3名計)", value: monthAll.length,
-      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, all: true, filter: { month: thisMonth }, accent: "var(--pink)" },
-    { label: "進行中(P1〜P7)", value: active.length, sub: "期間内・受注/Dead除く", filter: { active: true }, accent: "var(--amber)" },
-    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "期間内", filter: { phase: "P8" }, accent: "var(--good)" },
-    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "期間内", filter: { phase: "DEAD" }, accent: "var(--muted)" },
+      sub: `目標計 ${MEMBERS.reduce((s, m) => s + targetOf(m), 0)}件`, all: true, filter: { month: thisMonth }, accent: "var(--pink)", soft: "var(--soft-pink)" },
+    { label: "進行中(P1〜P7)", value: active.length, sub: "期間内・受注/Dead除く", filter: { active: true }, accent: "var(--amber)", soft: "var(--soft-amber)" },
+    { label: "受注(P8)", value: all.filter((d) => d.phase === "P8").length, sub: "期間内", filter: { phase: "P8" }, accent: "var(--good)", soft: "var(--soft-green)" },
+    { label: "Dead", value: all.filter((d) => d.phase === "DEAD").length, sub: "期間内", filter: { phase: "DEAD" }, accent: "var(--muted)", soft: "var(--soft-gray)" },
   ];
   $("kpiRow").innerHTML = kpis.map((k, i) => `
-    <div class="kpi" data-kpi="${i}" data-accent style="--accent:${k.accent}">
+    <div class="kpi" data-kpi="${i}" data-accent style="--accent:${k.accent};--accent-soft:${k.soft}">
       <div class="k-label">${esc(k.label)}</div>
       <div class="k-value">${k.value}</div>
       <div class="k-sub">${esc(k.sub)}</div>
