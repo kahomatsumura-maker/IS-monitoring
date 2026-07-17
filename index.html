@@ -694,11 +694,13 @@ function buildDeals(rows, tierMap) {
   for (const r of rows) {
     const member = memberOf(pick(r, COLS.apo));
     if (!member) continue;
-    // Dead判定は「フェーズ」列、P1〜P8の分類は「最終到達フェーズ」ではかる
+    // 現在フェーズ(進行中→受注/Dead)と最終到達フェーズ(P1〜P8のみ)を両方持つ
     const curRaw = String(pick(r, COLS.phase)).trim();
     const reachedRaw = String(pick(r, COLS.reached)).trim();
     const isDead = /^dead/i.test(curRaw);
-    const phase = isDead ? "DEAD" : (parsePhase(reachedRaw) || parsePhase(curRaw));
+    const curPhase = isDead ? "DEAD" : parsePhase(curRaw);
+    const reached = parsePhase(reachedRaw) || (isDead ? null : curPhase);
+    const phase = curPhase || reached;
     if (!phase) continue;
     const id = String(pick(r, COLS.id)).trim();
     const name = String(pick(r, COLS.name)).trim();
@@ -712,8 +714,8 @@ function buildDeals(rows, tierMap) {
     const isTarget = TARGET_SET.has(stripCorp(account));
     const leadCaseCount = (leadCounts.get(norm(account) + "|" + norm(contact)) || new Set()).size;
     seen.set(key, {
-      member, phase,
-      phaseRaw: isDead ? curRaw : (reachedRaw || curRaw),
+      member, phase, reached, reachedRaw,
+      phaseRaw: curRaw,
       owner: String(pick(r, COLS.owner)).trim() || "(未設定)",
       account, name, contact,
       apoDate: parseDateStr(pick(r, COLS.apoDate)),
@@ -769,8 +771,9 @@ function summarize(deals) {
   for (const m of MEMBERS) {
     const list = deals.filter((d) => d.member === m);
     const phases = Object.fromEntries(PHASES.map((p) => [p, list.filter((d) => d.phase === p)]));
+    const reachedPhases = Object.fromEntries(PHASES.map((p) => [p, list.filter((d) => d.reached === p)]));
     byMember[m.key] = {
-      member: m, list, phases,
+      member: m, list, phases, reachedPhases,
       total: list.length,
       live: list.filter((d) => LIVE_PHASES.includes(d.phase)),
       month: list.filter((d) => d.apoDate && monthKey(d.apoDate) === thisMonth),
@@ -874,6 +877,7 @@ function filterDeals(f, source) {
     if (f.member && d.member.key !== f.member) return false;
     if (f.members && !f.members.includes(d.member.key)) return false;
     if (f.phase && d.phase !== f.phase) return false;
+    if (f.reached && d.reached !== f.reached) return false;
     if (f.active && !LIVE_PHASES.includes(d.phase)) return false;
     if (f.month && !(d.apoDate && monthKey(d.apoDate) === f.month)) return false;
     if (f.week && !(d.apoDate && isoWeek(d.apoDate).key === f.week)) return false;
@@ -898,6 +902,7 @@ function renderMembers() {
     live: aggS(src, "live"), month: aggS(src, "month"), week: aggS(src, "week"),
     newLead: aggS(src, "newLead"), akapura: aggS(src, "akapura"), target: aggS(src, "target"),
     phases: Object.fromEntries(PHASES.map((p) => [p, isMembers.reduce((a, m) => a.concat(src[m.key].phases[p]), [])])),
+    reachedPhases: Object.fromEntries(PHASES.map((p) => [p, isMembers.reduce((a, m) => a.concat(src[m.key].reachedPhases[p]), [])])),
   });
   const TEAM_COLOR = "#9b8fe0";
   const entries = [
@@ -915,14 +920,15 @@ function renderMembers() {
     const pctReal = Math.round((sAll.month.length / e.target) * 100);
     const won = s.phases.P8.length, dead = s.phases.DEAD.length;
     const focus = e.focus || [];
-    const focusDeals = focus.flatMap((p) => s.phases[p]);
+    const focusDeals = focus.flatMap((p) => s.reachedPhases[p]);
     const fNew = focusDeals.filter((d) => d.isNewLead).length;
     const fAka = focusDeals.filter((d) => d.isAkapura).length;
-    const chip = (p) => {
-      const n = s.phases[p].length;
-      const isFocus = focus.includes(p);
+    const chip = (p, basis) => {
+      const n = (basis === "reached" ? s.reachedPhases : s.phases)[p].length;
+      const isFocus = basis === "reached" && focus.includes(p);
       const pct = s.total ? Math.round((n / s.total) * 100) : 0;
-      return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" title="${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
+      return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" data-basis="${basis}"
+        title="${basis === "reached" ? "最終到達 " : ""}${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
         ${isFocus ? '<span class="star">★</span>' : ""}
         <div class="bar" style="background:var(${PHASE_CVAR[p]})"></div>
         <div class="p-label">${PHASE_LABEL[p]}</div>
@@ -956,10 +962,14 @@ function renderMembers() {
         </div>
         <div class="meter"><i style="width:${Math.min(100, pctReal)}%;background:${e.color}"></i></div>
       </div>
-      <div class="pg-label">獲得したアポの最終到達フェーズ(進行中 → 受注/Dead)</div>
+      <div class="pg-label">最終到達フェーズ(★=注力 / どこまで進んだか)</div>
+      <div class="pgroup" style="grid-template-columns:repeat(8,1fr);margin-bottom:10px">
+        ${PHASES.filter((p) => p !== "DEAD").map((p) => chip(p, "reached")).join("")}
+      </div>
+      <div class="pg-label">現在フェーズ(進行中 → 受注/Dead)</div>
       <div class="phase-flex">
-        <div class="pgroup">${LIVE_PHASES.map(chip).join("")}</div>
-        <div class="pgroup done">${chip("P8")}${chip("DEAD")}</div>
+        <div class="pgroup">${LIVE_PHASES.map((p) => chip(p, "cur")).join("")}</div>
+        <div class="pgroup done">${chip("P8", "cur")}${chip("DEAD", "cur")}</div>
       </div>
       ${focus.length ? `<div class="lead-line">★${focus.map((p) => PHASE_LABEL[p]).join("・")}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
       <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
@@ -981,8 +991,13 @@ function renderMembers() {
     card.querySelectorAll("[data-act]").forEach((el) =>
       el.addEventListener("click", acts[el.dataset.act]));
     card.querySelectorAll(".ph").forEach((el) => {
-      el.addEventListener("click", () =>
-        openList(`${label} × ${PHASE_FULL[el.dataset.ph]}`, filterDeals({ ...base, phase: el.dataset.ph })));
+      el.addEventListener("click", () => {
+        const p = el.dataset.ph;
+        if (el.dataset.basis === "reached")
+          openList(`${label} × 最終到達 ${PHASE_FULL[p]}`, filterDeals({ ...base, reached: p }));
+        else
+          openList(`${label} × ${PHASE_FULL[p]}`, filterDeals({ ...base, phase: p }));
+      });
     });
     const leadTitles = { target: "対象企業の案件", newLead: "新規リード案件(対象企業・案件1件のみのリード)", akapura: "アカプラ案件(対象企業・既顧客新規)" };
     card.querySelectorAll("[data-f]").forEach((el) => {
@@ -1140,7 +1155,7 @@ function openList(title, deals) {
   $("listCount").textContent = `${deals.length}件`;
   const sorted = [...deals].sort((a, b) => (b.apoDate?.getTime() || 0) - (a.apoDate?.getTime() || 0));
   $("listTable").innerHTML = `
-    <thead><tr><th>案件名</th><th>取引先</th><th>リード(顧客担当者)</th><th>Tier</th><th>フェーズ</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>アポ日</th><th>DEAD理由</th></tr></thead>
+    <thead><tr><th>案件名</th><th>取引先</th><th>リード(顧客担当者)</th><th>Tier</th><th>フェーズ(現在)</th><th>最終到達</th><th>主担当</th><th>アポ取得</th><th>区分</th><th>アポ日</th><th>DEAD理由</th></tr></thead>
     <tbody>${sorted.map((d) => {
       const url = sfUrl(d.id);
       const nameCell = url
@@ -1157,13 +1172,14 @@ function openList(title, deals) {
         <td>${esc(d.contact || "—")}${d.contact && d.leadCaseCount ? `<span style="color:var(--muted)">(案件${d.leadCaseCount}件)</span>` : ""}</td>
         <td>${esc(d.tier)}</td>
         <td><span class="dot" style="display:inline-block;background:var(${PHASE_CVAR[d.phase]});margin-right:5px"></span>${esc(d.phaseRaw || PHASE_LABEL[d.phase])}</td>
+        <td title="${esc(d.reachedRaw || "")}">${d.reached ? (d.reached === "P8" ? "P8(受注)" : PHASE_LABEL[d.reached]) : "—"}</td>
         <td>${esc(d.owner)}</td>
         <td>${esc(d.member.key)}</td>
         <td>${kubun}</td>
         <td>${d.apoDate ? fmtYMD(d.apoDate) : "—"}</td>
         <td>${esc(d.deadReason || "")}</td>
       </tr>`;
-    }).join("") || `<tr><td colspan="10" style="color:var(--muted)">該当する案件がありません</td></tr>`}
+    }).join("") || `<tr><td colspan="11" style="color:var(--muted)">該当する案件がありません</td></tr>`}
     </tbody>`;
   $("sfHint").textContent = settings.sfBase
     ? "案件名クリックで Salesforce が開きます。"
