@@ -450,7 +450,7 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const MEMBERS = [
   { key: "林我玖",   role: "IS",   cvar: "--m1", focus: "P3", target: 35,
     focusNote: "P3を注力モニタリング(アカプラは01商談でも可)" },
-  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1", target: 20,
+  { key: "奈良",     role: "IS",   cvar: "--m2", focus: "P1", target: 25,
     focusNote: "P1を注力モニタリング" },
   { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: null, target: 10, focusNote: "" },
 ];
@@ -865,6 +865,7 @@ function renderKpis() {
 function filterDeals(f, source) {
   return (source || DEALS).filter((d) => {
     if (f.member && d.member.key !== f.member) return false;
+    if (f.members && !f.members.includes(d.member.key)) return false;
     if (f.phase && d.phase !== f.phase) return false;
     if (f.active && !LIVE_PHASES.includes(d.phase)) return false;
     if (f.month && !(d.apoDate && monthKey(d.apoDate) === f.month)) return false;
@@ -881,17 +882,35 @@ function filterDeals(f, source) {
 
 function renderMembers() {
   $("memberNote").textContent = `期間: ${periodLabel()} / 数字をクリックすると案件一覧が開きます`;
-  $("memberCards").innerHTML = MEMBERS.map((m) => {
-    const s = SUM[m.key];
-    const sAll = SUM_ALL[m.key];
-    const target = targetOf(m);
-    const pctReal = Math.round((sAll.month.length / target) * 100);
+  const isMembers = MEMBERS.filter((m) => m.role === "IS");
+  const isKeys = isMembers.map((m) => m.key);
+  // IS全体(合算)の擬似サマリー
+  const aggS = (src, key) => isMembers.reduce((a, m) => a.concat(src[m.key][key]), []);
+  const teamSum = (src) => ({
+    total: isMembers.reduce((a, m) => a + src[m.key].total, 0),
+    live: aggS(src, "live"), month: aggS(src, "month"), week: aggS(src, "week"),
+    newLead: aggS(src, "newLead"), akapura: aggS(src, "akapura"), target: aggS(src, "target"),
+    phases: Object.fromEntries(PHASES.map((p) => [p, isMembers.reduce((a, m) => a.concat(src[m.key].phases[p]), [])])),
+  });
+  const TEAM_COLOR = "#9b8fe0";
+  const entries = [
+    { key: "__team", label: "IS全体", roleLabel: `IS合算(${isKeys.join("+")})`, color: TEAM_COLOR,
+      focus: null, focusNote: "", s: teamSum(SUM), sAll: teamSum(SUM_ALL),
+      target: isMembers.reduce((a, m) => a + targetOf(m), 0), filterBase: { members: isKeys } },
+    ...MEMBERS.map((m) => ({
+      key: m.key, label: m.key, roleLabel: m.role, color: memberColor(m),
+      focus: m.focus, focusNote: m.focusNote, s: SUM[m.key], sAll: SUM_ALL[m.key],
+      target: targetOf(m), filterBase: { member: m.key } })),
+  ];
+  $("memberCards").innerHTML = entries.map((e) => {
+    const { s, sAll } = e;
+    const pctReal = Math.round((sAll.month.length / e.target) * 100);
     const won = s.phases.P8.length, dead = s.phases.DEAD.length;
-    const fNew = m.focus ? s.phases[m.focus].filter((d) => d.isNewLead).length : 0;
-    const fAka = m.focus ? s.phases[m.focus].filter((d) => d.isAkapura).length : 0;
+    const fNew = e.focus ? s.phases[e.focus].filter((d) => d.isNewLead).length : 0;
+    const fAka = e.focus ? s.phases[e.focus].filter((d) => d.isAkapura).length : 0;
     const chip = (p) => {
       const n = s.phases[p].length;
-      const isFocus = m.focus === p;
+      const isFocus = e.focus === p;
       const pct = s.total ? Math.round((n / s.total) * 100) : 0;
       return `<div class="ph ${n === 0 ? "is-zero" : ""} ${isFocus ? "is-focus" : ""}" data-ph="${p}" title="${esc(PHASE_FULL[p])}${isFocus ? "(注力フェーズ)" : ""}">
         ${isFocus ? '<span class="star">★</span>' : ""}
@@ -902,12 +921,12 @@ function renderMembers() {
       </div>`;
     };
     return `
-    <div class="card" data-m="${esc(m.key)}" style="--mc:${memberColor(m)}">
+    <div class="card" data-m="${esc(e.key)}" style="--mc:${e.color}">
       <div class="c-head">
-        <span class="dot" style="background:${memberColor(m)}"></span>
-        <span class="c-name">${esc(m.key)}</span>
-        <span class="role-badge">${esc(m.role)}</span>
-        ${m.focusNote ? `<span class="focus-note">★ ${esc(m.focusNote)}</span>` : ""}
+        <span class="dot" style="background:${e.color}"></span>
+        <span class="c-name">${esc(e.label)}</span>
+        <span class="role-badge">${esc(e.roleLabel)}</span>
+        ${e.focusNote ? `<span class="focus-note">★ ${esc(e.focusNote)}</span>` : ""}
       </div>
       <div class="c-hero">
         <div class="hero-main" data-act="total">
@@ -923,16 +942,16 @@ function renderMembers() {
       <div class="meter-block">
         <div class="meter-label">
           <span>月次目標(今月のアポ獲得)</span>
-          <span><b>${sAll.month.length}</b> / ${target}件(${pctReal}%) ・ 今週 <b>${sAll.week.length}</b>件</span>
+          <span><b>${sAll.month.length}</b> / ${e.target}件(${pctReal}%) ・ 今週 <b>${sAll.week.length}</b>件</span>
         </div>
-        <div class="meter"><i style="width:${Math.min(100, pctReal)}%;background:${memberColor(m)}"></i></div>
+        <div class="meter"><i style="width:${Math.min(100, pctReal)}%;background:${e.color}"></i></div>
       </div>
       <div class="pg-label">獲得したアポの現在フェーズ(進行中 → 受注/Dead)</div>
       <div class="phase-flex">
         <div class="pgroup">${LIVE_PHASES.map(chip).join("")}</div>
         <div class="pgroup done">${chip("P8")}${chip("DEAD")}</div>
       </div>
-      ${m.focus ? `<div class="lead-line">★${m.focus}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
+      ${e.focus ? `<div class="lead-line">★${e.focus}内訳(対象企業): <span class="badge new">新規リード</span><b>${fNew}</b>件 / <span class="badge">アカプラ(既顧客)</span><b>${fAka}</b>件</div>` : ""}
       <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
         <span class="badge new">新規リード</span><b data-f="newLead" style="cursor:pointer">${s.newLead.length}</b>件 /
         <span class="badge">アカプラ(既顧客)</span><b data-f="akapura" style="cursor:pointer">${s.akapura.length}</b>件</div>
@@ -940,23 +959,25 @@ function renderMembers() {
   }).join("");
 
   $("memberCards").querySelectorAll(".card").forEach((card) => {
-    const mkey = card.dataset.m;
+    const entry = entries.find((e) => e.key === card.dataset.m);
+    const base = entry.filterBase;
+    const label = entry.label;
     const acts = {
-      total: () => openList(`${mkey} の獲得アポ(${periodLabel()})`, filterDeals({ member: mkey })),
-      active: () => openList(`${mkey} の進行中案件(P1〜P7)`, filterDeals({ member: mkey, active: true })),
-      won: () => openList(`${mkey} の受注(P8)`, filterDeals({ member: mkey, phase: "P8" })),
-      dead: () => openList(`${mkey} のDead案件`, filterDeals({ member: mkey, phase: "DEAD" })),
+      total: () => openList(`${label} の獲得アポ(${periodLabel()})`, filterDeals({ ...base })),
+      active: () => openList(`${label} の進行中案件(P1〜P7)`, filterDeals({ ...base, active: true })),
+      won: () => openList(`${label} の受注(P8)`, filterDeals({ ...base, phase: "P8" })),
+      dead: () => openList(`${label} のDead案件`, filterDeals({ ...base, phase: "DEAD" })),
     };
     card.querySelectorAll("[data-act]").forEach((el) =>
       el.addEventListener("click", acts[el.dataset.act]));
+    card.querySelectorAll(".ph").forEach((el) => {
+      el.addEventListener("click", () =>
+        openList(`${label} × ${PHASE_FULL[el.dataset.ph]}`, filterDeals({ ...base, phase: el.dataset.ph })));
+    });
     const leadTitles = { target: "対象企業の案件", newLead: "新規リード案件(対象企業・案件1件のみのリード)", akapura: "アカプラ案件(対象企業・既顧客新規)" };
     card.querySelectorAll("[data-f]").forEach((el) => {
       el.addEventListener("click", () =>
-        openList(`${mkey} の${leadTitles[el.dataset.f]}`, filterDeals({ member: mkey, [el.dataset.f]: true })));
-    });
-    card.querySelectorAll(".ph").forEach((el) => {
-      el.addEventListener("click", () =>
-        openList(`${mkey} × ${PHASE_FULL[el.dataset.ph]}`, filterDeals({ member: mkey, phase: el.dataset.ph })));
+        openList(`${label} の${leadTitles[el.dataset.f]}`, filterDeals({ ...base, [el.dataset.f]: true })));
     });
   });
 }
