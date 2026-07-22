@@ -570,12 +570,6 @@ const COLS = {
   hearing: ["アポイント時ヒアリング情報","ヒアリング情報","アポヒアリング","ヒアリング","案件詳細・経営課題","テーマ","ネクストアクション","Mutual Close Plan","備考","メモ"],
 };
 const MKT_KEYWORD = "エンプラ松村"; // これをヒアリング情報等に含む案件はマーケ(松村)起点とみなす
-// 「エンプラ松村」案件で松村(マーケ)の獲得アポに計上する初回アポ取得者(この3名のみ)
-const MKT_TAKERS = ["松村佳保", "河野壱世", "鈴木美里"];
-const isMktTaker = (apoName) => {
-  const n = norm(apoName);
-  return !!n && MKT_TAKERS.some((t) => n.includes(norm(t)));
-};
 // 案件行が「エンプラ松村」を含むか(列名に依存せず全フィールド横断+キャッシュ用マーカー)
 function detectMktKeyword(r) {
   if (r.__mkt === true) return true;
@@ -719,11 +713,10 @@ function buildDeals(rows, tierMap) {
         // 初回アポ取得者が林/奈良: 獲得アポは本人に計上し、松村へは「マーケ経由ISアポ」として別掲
         member = apoMember;
         viaMarketing = true;
-      } else if (isMktTaker(apoName)) {
-        // 松村本人・河野壱世・鈴木美里が取得: マーケ(松村)の獲得アポに計上
+      } else {
+        // 松村本人 or 対象3名以外の誰か: マーケ(松村)の獲得アポに計上
         member = MKT_MEMBER;
       }
-      // 上記いずれにも該当しない取得者はマーケに計上しない(通常判定=対象外なら除外)
     }
     if (!member) continue;
     // 現在フェーズ(進行中→受注/Dead)と最終到達フェーズ(P1〜P8のみ)を両方持つ
@@ -1011,7 +1004,7 @@ function renderMembers() {
       <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
         <span class="badge new">新規リード</span><b data-f="newLead" style="cursor:pointer">${s.newLead.length}</b>件 /
         <span class="badge">アカプラ(既顧客)</span><b data-f="akapura" style="cursor:pointer">${s.akapura.length}</b>件</div>
-      ${e.viaISList ? `<div class="lead-line" title="「エンプラ松村」を含むアポのうち初回アポイント取得者がISのもの。獲得アポはIS本人に計上済み(松村の獲得アポには含みません)。">📣 マーケ経由ISアポ <b data-via="1" style="cursor:pointer">${e.viaISList.length}</b>件</div>` : ""}
+      ${e.viaISList ? `<div class="lead-line" title="「エンプラ松村」を含むアポのうち初回アポイント取得者がISのもの。獲得アポはIS本人に計上済み(松村の獲得アポには含みません)。">📣 マーケ経由ISアポ <b data-via="1" style="cursor:pointer">${e.viaISList.length}</b>件 <span style="color:var(--muted)">(26年6月以降計測)</span></div>` : ""}
     </div>`;
   }).join("");
 
