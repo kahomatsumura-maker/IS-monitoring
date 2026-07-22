@@ -570,6 +570,12 @@ const COLS = {
   hearing: ["アポイント時ヒアリング情報","ヒアリング情報","アポヒアリング","ヒアリング","案件詳細・経営課題","テーマ","ネクストアクション","Mutual Close Plan","備考","メモ"],
 };
 const MKT_KEYWORD = "エンプラ松村"; // これをヒアリング情報等に含む案件はマーケ(松村)起点とみなす
+// 「エンプラ松村」案件で松村(マーケ)の獲得アポに計上する初回アポ取得者(この3名のみ)
+const MKT_TAKERS = ["松村佳保", "河野壱世", "鈴木美里"];
+const isMktTaker = (apoName) => {
+  const n = norm(apoName);
+  return !!n && MKT_TAKERS.some((t) => n.includes(norm(t)));
+};
 // 案件行が「エンプラ松村」を含むか(列名に依存せず全フィールド横断+キャッシュ用マーカー)
 function detectMktKeyword(r) {
   if (r.__mkt === true) return true;
@@ -703,7 +709,8 @@ function buildDeals(rows, tierMap) {
   const MKT_MEMBER = MEMBERS.find((m) => m.role === "マーケ");
   const seen = new Map();
   for (const r of rows) {
-    const apoMember = memberOf(pick(r, COLS.apo));
+    const apoName = pick(r, COLS.apo);
+    const apoMember = memberOf(apoName);
     const isMkt = !!(MKT_MEMBER && detectMktKeyword(r)); // 「エンプラ松村」ワードあり=マーケ起点
     let member = apoMember;
     let viaMarketing = false;
@@ -712,10 +719,11 @@ function buildDeals(rows, tierMap) {
         // 初回アポ取得者が林/奈良: 獲得アポは本人に計上し、松村へは「マーケ経由ISアポ」として別掲
         member = apoMember;
         viaMarketing = true;
-      } else {
-        // 松村本人 or 対象3名以外: マーケ(松村)の獲得アポに計上
+      } else if (isMktTaker(apoName)) {
+        // 松村本人・河野壱世・鈴木美里が取得: マーケ(松村)の獲得アポに計上
         member = MKT_MEMBER;
       }
+      // 上記いずれにも該当しない取得者はマーケに計上しない(通常判定=対象外なら除外)
     }
     if (!member) continue;
     // 現在フェーズ(進行中→受注/Dead)と最終到達フェーズ(P1〜P8のみ)を両方持つ
