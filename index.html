@@ -30,7 +30,7 @@
     --soft-pink: #f3bcd7; --soft-gray: #dde3ec;
     /* メンバー色(淡め) */
     --m1: #5f8fe8;  /* 林我玖 */
-    --m2: #4aa87a;  /* 奈良 */
+    --m2: #4aa87a;  /* 奈良和馬 */
     --m3: #e884b2;  /* 松村佳保 */
     /* フェーズ(淡い青→濃、受注=緑) */
     --p1: #b3cdf5; --p2: #9cbdf2; --p3: #84acee; --p4: #6d9bea;
@@ -450,7 +450,7 @@ const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const MEMBERS = [
   { key: "林我玖",   role: "IS",   cvar: "--m1", focus: ["P1", "P4"], target: 35,
     focusNote: "P1・P4を注力モニタリング" },
-  { key: "奈良",     role: "IS",   cvar: "--m2", focus: ["P1"], target: 25,
+  { key: "奈良和馬", role: "IS",   cvar: "--m2", focus: ["P1"], target: 25,
     focusNote: "P1を注力モニタリング" },
   { key: "松村佳保", role: "マーケ", cvar: "--m3", focus: ["P1"], target: 10,
     focusNote: "P1を注力モニタリング" },
@@ -567,7 +567,17 @@ const COLS = {
   tier:    ["Tier","TIER","tier","ティア"],
   lead:    ["リード区分","リード種別","新規リード"],
   dtype:   ["商談種別","アポ種別"],
+  hearing: ["アポイント時ヒアリング情報","ヒアリング情報","アポヒアリング","ヒアリング","案件詳細・経営課題","テーマ","ネクストアクション","Mutual Close Plan","備考","メモ"],
 };
+const MKT_KEYWORD = "エンプラ松村"; // これをヒアリング情報等に含む案件はマーケ(松村)起点とみなす
+// 案件行が「エンプラ松村」を含むか(列名に依存せず全フィールド横断+キャッシュ用マーカー)
+function detectMktKeyword(r) {
+  if (r.__mkt === true) return true;
+  for (const v of Object.values(r)) {
+    if (typeof v === "string" && v.includes(MKT_KEYWORD)) return true;
+  }
+  return false;
+}
 function pick(row, keyList) {
   for (const k of keyList) {
     if (row[k] != null && row[k] !== "") return row[k];
@@ -690,9 +700,23 @@ function buildDeals(rows, tierMap) {
     if (!n) return null;
     return MEMBERS.find((m) => n.includes(norm(m.key))) || null;
   };
+  const MKT_MEMBER = MEMBERS.find((m) => m.role === "マーケ");
   const seen = new Map();
   for (const r of rows) {
-    const member = memberOf(pick(r, COLS.apo));
+    const apoMember = memberOf(pick(r, COLS.apo));
+    const isMkt = !!(MKT_MEMBER && detectMktKeyword(r)); // 「エンプラ松村」ワードあり=マーケ起点
+    let member = apoMember;
+    let viaMarketing = false;
+    if (isMkt) {
+      if (apoMember && apoMember.role === "IS") {
+        // 初回アポ取得者が林/奈良: 獲得アポは本人に計上し、松村へは「マーケ経由ISアポ」として別掲
+        member = apoMember;
+        viaMarketing = true;
+      } else {
+        // 松村本人 or 対象3名以外: マーケ(松村)の獲得アポに計上
+        member = MKT_MEMBER;
+      }
+    }
     if (!member) continue;
     // 現在フェーズ(進行中→受注/Dead)と最終到達フェーズ(P1〜P8のみ)を両方持つ
     const curRaw = String(pick(r, COLS.phase)).trim();
@@ -727,6 +751,8 @@ function buildDeals(rows, tierMap) {
       leadCaseCount,
       isNewLead: isTarget && leadCaseCount === 1, // 新規リード=案件が1件しかないリードの案件
       isAkapura: isTarget && shinki === "既顧客新規案件",
+      viaMarketing, // マーケ(エンプラ松村)経由のISアポ
+      apoTaker: String(pick(r, COLS.apo)).trim(),
       sisaku: String(pick(r, COLS.sisaku)).trim(),
       deadReason: String(pick(r, COLS.deadReason)).trim(),
       caseType: String(pick(r, COLS.caseType)).trim(),
@@ -887,6 +913,7 @@ function filterDeals(f, source) {
     if (f.target && !d.isTarget) return false;
     if (f.newLead && !d.isNewLead) return false;
     if (f.akapura && !d.isAkapura) return false;
+    if (f.viaMarketing && !d.viaMarketing) return false;
     return true;
   });
 }
@@ -913,7 +940,8 @@ function renderMembers() {
     ...MEMBERS.map((m) => ({
       key: m.key, label: m.key, roleLabel: m.role, color: memberColor(m),
       focus: m.focus, focusNote: m.focusNote, s: SUM[m.key], sAll: SUM_ALL[m.key],
-      target: targetOf(m), filterBase: { member: m.key } })),
+      target: targetOf(m), filterBase: { member: m.key },
+      viaISList: m.role === "マーケ" ? DEALS.filter((d) => d.viaMarketing) : null })),
   ];
   $("memberCards").innerHTML = entries.map((e) => {
     const { s, sAll } = e;
@@ -975,6 +1003,7 @@ function renderMembers() {
       <div class="lead-line" title="対象企業: ${esc(TARGET_ACCOUNTS.join("・"))}">対象企業(${TARGET_ACCOUNTS.length}社) <b data-f="target" style="cursor:pointer">${s.target.length}</b>件:
         <span class="badge new">新規リード</span><b data-f="newLead" style="cursor:pointer">${s.newLead.length}</b>件 /
         <span class="badge">アカプラ(既顧客)</span><b data-f="akapura" style="cursor:pointer">${s.akapura.length}</b>件</div>
+      ${e.viaISList ? `<div class="lead-line" title="「エンプラ松村」を含むアポのうち初回アポイント取得者がISのもの。獲得アポはIS本人に計上済み(松村の獲得アポには含みません)。">📣 マーケ経由ISアポ <b data-via="1" style="cursor:pointer">${e.viaISList.length}</b>件</div>` : ""}
     </div>`;
   }).join("");
 
@@ -1003,6 +1032,11 @@ function renderMembers() {
     card.querySelectorAll("[data-f]").forEach((el) => {
       el.addEventListener("click", () =>
         openList(`${label} の${leadTitles[el.dataset.f]}`, filterDeals({ ...base, [el.dataset.f]: true })));
+    });
+    // マーケ経由ISアポ(初回アポ取得者はISだが「エンプラ松村」ワードあり)
+    card.querySelectorAll("[data-via]").forEach((el) => {
+      el.addEventListener("click", () =>
+        openList("マーケ経由ISアポ(エンプラ松村・初回アポ取得者=IS)", filterDeals({ viaMarketing: true })));
     });
   });
 }
@@ -1232,7 +1266,7 @@ async function doImport() {
     const now = new Date();
     const payload = { rows, savedAt: fmtYMD(now) };
     const check = buildDeals(rows, {});
-    if (!check.length) { $("importMsg").textContent = "⚠ 対象メンバー(林我玖・奈良・松村佳保)がアポ取得者の案件が0件でした。列名と値を確認してください。"; return; }
+    if (!check.length) { $("importMsg").textContent = `⚠ 対象メンバー(${MEMBERS.map((m) => m.key).join("・")})がアポ取得者の案件が0件でした。列名と値を確認してください。`; return; }
     localStorage.setItem(LS.manual, JSON.stringify(payload));
     closeOverlay("importOverlay");
     $("inFile").value = ""; $("inPaste").value = "";
@@ -1324,6 +1358,7 @@ async function init(fetchLive = true) {
       for (const keys of Object.values(COLS)) {
         for (const k of keys) if (r[k] != null && r[k] !== "") { o[k] = r[k]; break; }
       }
+      if (detectMktKeyword(r)) o.__mkt = true; // 「エンプラ松村」判定をキャッシュに保持
       return o;
     });
     const now = new Date();
